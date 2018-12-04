@@ -53,23 +53,8 @@ mapkey() {
   esac
 }
 
-printconfig() {
-  echo "mycall=$mycall"
-  echo "mode=$mode"
-  echo "mycq=$mycq"
-  echo "serial=$serial"
-  echo "myexchange=$myexchange"
-  echo "rigctl=$rigctl"
-  echo "rigdevice=$rigdevice"
-  echo "rig=$rig"
-  echo "keyer=$keyer"
-  echo "cwdevice=$cwdevice"
-  echo "callfile=$callfile"
-  echo "speed=$speed"
-}
-
 runmenu() {
-  tput clear
+#  tput clear
   echo "runmenu"
   echo -e ">$buff"
 }
@@ -81,12 +66,96 @@ sandpmenu() {
 
 # this expects the function name as arg1, and the logmode as arg2
 exec_func() {
-  echo "exec $1 $2"
-  case "$1" in
-    "back") backspace ;;
-    *) appendbuff "$1" ;;
-  esac
+  # create a named function based on the key and mode
+  func="$2$1"
+  if [ -n "$(type -t $func)" ] && [ "$(type -t $func)" = function ]
+  then
+    $func
+  else
+    appendbuff "$1"
+  fi
 }
+
+runf1() {
+  echo "run f1"
+}
+
+runf2() {
+  echo "run f2"
+}
+
+runf3() {
+  echo "run f3"
+}
+
+runf4() {
+  echo "run f4"
+}
+
+runf5() {
+  echo "run f5"
+}
+
+runf6() {
+  echo "run f6"
+}
+
+runf7() {
+  echo "run f7"
+}
+
+runf8() {
+  echo "run f8"
+}
+
+runf9() {
+  echo "run f9"
+}
+
+runenter() {
+  echo "run enter"
+}
+
+sandpf1() {
+  echo "sandp f1"
+}
+
+sandpf2() {
+  echo "sandp f2"
+}
+
+sandpf3() {
+  echo "sandp f3"
+}
+
+sandpf4() {
+  echo "sandp f4"
+}
+
+sandpf5() {
+  echo "sandp f5"
+}
+
+sandpf6() {
+  echo "sandp f6"
+}
+
+sandpf7() {
+  echo "sandp f7"
+}
+
+sandpf8() {
+  echo "sandp f8"
+}
+
+sandpf9() {
+  echo "sandp f9"
+}
+
+sandpenter() {
+  echo "sandp enter"
+}
+
 
 backspace() {
   buff="${buff:0:-1}"
