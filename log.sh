@@ -53,133 +53,131 @@ mapkey() {
   esac
 }
 
-runmenu() {
-#  tput clear
-  echo "runmenu"
-  echo -e ">$buff"
-}
-sandpmenu() {
+menu() {
+  lines=0
   tput clear
-  echo "sandpmenu"
-  echo -e ">$buff"
+  tput bold
+  echo "Mode: $logmode"
+  tput sgr0
+  # build the function map for the menu
+  for i in {1..9}
+  do
+    f="f$i"
+    func="$logmode$f"
+    if [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
+    then
+      let lines+=1 
+      echo -e "$f: ${!func}"
+    fi
+  done
+
+  echo "Last operation: $status"
+  echo -n ">$buff"
+  let lines+=2
 }
 
-# this expects the function name as arg1, and the logmode as arg2
-exec_func() {
+# this expects the keyname as arg1, and the logmode as arg2
+# these functions are mapped in log.cfg in the function map section
+# if no function is found, the key appendbuff is called
+execfunc() {
   # create a named function based on the key and mode
   func="$2$1"
-  if [ -n "$(type -t $func)" ] && [ "$(type -t $func)" = function ]
+  if [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
   then
-    $func
+# TODO work on supporting chained functions via array definition
+#    if [[ "$(declare -p $func)" =~ "declare -a" ]]; then
+#      status="array"
+#    else
+      ${!func}
+#    fi
   else
     appendbuff "$1"
   fi
 }
 
-runf1() {
-  echo "run f1"
+# takes speed and text to send as arguments
+cwsend() {
+ status "sending cw"
 }
 
-runf2() {
-  echo "run f2"
+# these are the defined functions that you can map f1-f9 to for each mode
+sendbuff() {
+ status="$buff"
+ menu
 }
 
-runf3() {
-  echo "run f3"
+sendcq() {
+ status="$mycq"
+ menu
 }
 
-runf4() {
-  echo "run f4"
+sendexchange() {
+ status="$myexchange"
+ menu
 }
 
-runf5() {
-  echo "run f5"
+sendmycall() {
+ status="$mycall"
+ menu
+}
+sendtu() {
+  status="TU"
+ menu
+}
+sendagn() {
+ status="$myagn"
+ menu
+}
+logqso() {
+  status="QSO logged"
+ menu
 }
 
-runf6() {
-  echo "run f6"
-}
 
-runf7() {
-  echo "run f7"
-}
-
-runf8() {
-  echo "run f8"
-}
-
-runf9() {
-  echo "run f9"
+togglemode() {
+  if [[ "$logmode" == "run" ]]
+  then 
+    logmode="sandp"
+  else
+    logmode="run"
+  fi
+  menu
 }
 
 runenter() {
   echo "run enter"
 }
 
-sandpf1() {
-  echo "sandp f1"
-}
-
-sandpf2() {
-  echo "sandp f2"
-}
-
-sandpf3() {
-  echo "sandp f3"
-}
-
-sandpf4() {
-  echo "sandp f4"
-}
-
-sandpf5() {
-  echo "sandp f5"
-}
-
-sandpf6() {
-  echo "sandp f6"
-}
-
-sandpf7() {
-  echo "sandp f7"
-}
-
-sandpf8() {
-  echo "sandp f8"
-}
-
-sandpf9() {
-  echo "sandp f9"
-}
-
 sandpenter() {
   echo "sandp enter"
 }
 
+runback="backspace"
+sandpback="backspace"
 
 backspace() {
   buff="${buff:0:-1}"
+  tput el1
+  tput cup $lines 0
+  echo -n ">$buff"
 }
 
 # takes a single argument of the text to append to buff
 appendbuff() {
   buff="$buff$1"
+  tput el1
+  tput cup $lines 0
+  echo -n ">$buff"
 }
 
 mainloop() {
   buff=""
+  menu
   while true
   do
-    if [[ "$logmode" == "run" ]]
-    then
-      runmenu
-    else
-      sandpmenu
-    fi
     key=$(readkey)
     mappedkey=$(mapkey "$key")
-    echo "$mappedkey"
-    exec_func $mappedkey $logmode
+    execfunc $mappedkey $logmode
   done
 }
 
