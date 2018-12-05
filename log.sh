@@ -37,6 +37,7 @@ initkeys() {
 # designed to be called using command substitution
 # e.g.:  mappedkey=$(mapkey "$key")
 mapkey() {
+  echo "-$1-" >> log.log
   case "$1" in
     "$f1") echo "f1";;
     "$f2") echo "f2";;
@@ -49,6 +50,8 @@ mapkey() {
     "$f9") echo "f9";;
     "$enter") echo "enter";;
     "$back") echo "back";;
+    " ") echo "space";;
+    "	") echo "tab";;
     *) echo "$1";;
   esac
 }
@@ -57,7 +60,7 @@ menu() {
   lines=0
   tput clear
   tput bold
-  echo "Mode: $logmode"
+  echo "Mode: $logmode  Speed: $speed"
   tput sgr0
   # build the function map for the menu
   for i in {1..9}
@@ -80,59 +83,100 @@ menu() {
 # these functions are mapped in log.cfg in the function map section
 # if no function is found, the key appendbuff is called
 execfunc() {
+  echo "KEY:$1: MODE:$2:" >> log.log
   # create a named function based on the key and mode
   func="$2$1"
-  if [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
+  if [[ "$func" =~ ^[[:alnum:]]*$ ]] && [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
   then
-# TODO work on supporting chained functions via array definition
-#    if [[ "$(declare -p $func)" =~ "declare -a" ]]; then
-#      status="array"
-#    else
-      ${!func}
-#    fi
+    ${!func}
   else
     appendbuff "$1"
   fi
 }
 
-# takes speed and text to send as arguments
+# arg1: text
 cwsend() {
- status "sending cw"
+  $keyer -w $speed -d $cwdevice -t "$1"
 }
+
+qrq() {
+  let speed+=5
+  menu
+}
+qrs() {
+  let speed-=5
+  menu
+}
+runqrq=qrq
+sandpqrq=qrq
+runqrs=qrs
+sandpqrs=qrs
 
 # these are the defined functions that you can map f1-f9 to for each mode
 sendbuff() {
- status="$buff"
- menu
+ cwsend "$buff"
 }
 
 sendcq() {
- status="$mycq"
- menu
+ cwsend "$mycq"
 }
 
 sendexchange() {
- status="$myexchange"
- menu
+ cwsend "$myexchange"
 }
 
 sendmycall() {
- status="$mycall"
- menu
+ cwsend "$mycall"
 }
 sendtu() {
-  status="TU"
- menu
+  cwsend "TU"
 }
 sendagn() {
- status="$myagn"
- menu
+ cwsend "$myagn"
 }
 logqso() {
+  dxcall=$(echo "$buff" | cut -d' ' -f1)
+  decall="$mycall"
+  band="20M"
+  mode="CW"
+  date=$(date -u +"%Y%m%d")
+  timeon=$(date -u +%H%M)
+  sentrs="599"
+  recvrs="599"
+  comments=$(echo "$buff" | cut -d' ' -f2-)
+  echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <FREQ:${#frequency}>$frequency" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <MODE:${#mode}>$mode" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <QSO_DATE:${#date}>$date" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <TIME_ON:${#timeon}>$timeon" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <OPERATOR:${#decall}>$decall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <RST_SENT:${#sentrs}>$sentrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <RST_RCVD:${#recvrs}>$recvrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <COMMENT:${#comments}>$comments" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   status="QSO logged"
- menu
+  menu
 }
 
+send_tu_exchange_logqso() {
+  sendtu
+  sendexchange
+  logqso
+  clearbuff
+}
+
+send_buff_exchange() {
+  sendbuff
+  sendexchange
+}
+
+send_tu_logqso_cq() {
+  sendtu
+  logqso
+  sendcq
+  clearbuff
+}
 
 togglemode() {
   if [[ "$logmode" == "run" ]]
@@ -145,22 +189,43 @@ togglemode() {
 }
 
 runenter() {
-  echo "run enter"
+  sendbuff
 }
 
 sandpenter() {
-  echo "sandp enter"
+  sendbuff
 }
 
-runback="backspace"
-sandpback="backspace"
+tab() {
+  status="TAB"
+}
+runtab=tab
+sandptab=tab
 
-backspace() {
-  buff="${buff:0:-1}"
+space() {
+  appendbuff " "
+}
+runspace=space
+sandpspace=space
+
+clearbuff() {
+  buff=""
   tput el1
   tput cup $lines 0
   echo -n ">$buff"
 }
+
+backspace() {
+  if [[ ! -z "$buff" ]]
+  then
+    buff="${buff:0:-1}"
+    tput el1
+    tput cup $lines 0
+    echo -n ">$buff"
+  fi
+}
+runback="backspace"
+sandpback="backspace"
 
 # takes a single argument of the text to append to buff
 appendbuff() {
@@ -177,7 +242,7 @@ mainloop() {
   do
     key=$(readkey)
     mappedkey=$(mapkey "$key")
-    execfunc $mappedkey $logmode
+    execfunc "$mappedkey" "$logmode"
   done
 }
 
