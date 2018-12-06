@@ -7,3 +7,5 @@ It features:
 -Dynamic function key configuration 
 -Call and exchange auto fills from callfile
 -LOTW compatible ADIF output
+
+![demo](https://i.imgur.com/GayxKq3.gif)
