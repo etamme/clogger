@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # load config elements
-source log.cfg
+source clogger.cfg
 
 # This function reads keys, including special function keys
 readkey() {
@@ -153,6 +153,7 @@ logqso() {
   echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   qsocount="$(($qsocount+1))"
   serial="$(($serial+1))"
+  dupe="false"
   menu
 }
 
@@ -185,6 +186,15 @@ togglemode() {
   menu
 }
 
+# arg1 is call to check
+checkdupe() {
+  if grep -qi "$1" "$logfile"
+  then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
 
 #
 # ------------ functions for special key bindings ---------------
@@ -242,9 +252,21 @@ backspace() {
   if [[ ! -z "$buff" ]]
   then
     buff="${buff:0:-1}"
+    if [[ "${#buff}" -ge "3" ]]
+    then
+      local call=$(echo "$buff" | cut -d' ' -f1)
+      dupe=$(checkdupe "$call")
+    fi
+
+    if [[ "$dupe" == "true" ]]
+    then
+      tput setaf 1
+    fi
+
     tput el1
     tput cup $buffline 0
     echo -n ">$buff"
+    tput sgr0
   fi
 }
 runback="backspace"
@@ -290,15 +312,27 @@ drawlastaction() {
   tput dim
   echo "Last action: $lastaction"
   tput sgr0
-  tput rc 
+  tput rc
 }
 
 # takes a single argument of the text to append to buff
 appendbuff() {
   buff="$buff$1"
   tput el1
+
+  if [[ "${#buff}" -ge "3" ]]
+  then
+    local call=$(echo "$buff" | cut -d' ' -f1)
+    dupe=$(checkdupe "$call")
+  fi
+
+  if [[ "$dupe" == "true" ]]
+  then
+    tput setaf 1
+  fi
   tput cup $buffline 0
   echo -n ">$buff"
+  tput sgr0
 }
 
 clearbuff() {
@@ -314,6 +348,7 @@ drawbuff() {
   clearline $buffline
   tput cup $buffline 0
   echo -n ">$buff"
+  tput sgr0
 }
 
 drawstatus() {
@@ -342,6 +377,7 @@ mainloop() {
   buff=""
   subbuff=""
   lastaction=""
+  dupe="false"
   statusline=0
   lastactionline=1
   menuline=2

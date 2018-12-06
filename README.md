@@ -6,6 +6,7 @@ It features:
 - Run, and search and pounce modes  
 - Dynamic function key configuration 
 - Call and exchange auto fills from callfile
+- Automatic DUPE checking
 - LOTW compatible ADIF output
 
-![demo](https://i.imgur.com/GayxKq3.gif)
+![demo](https://i.imgur.com/2Flu8Ay.gif)
