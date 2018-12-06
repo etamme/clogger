@@ -39,7 +39,6 @@ initkeys() {
 # designed to be called using command substitution
 # e.g.:  mappedkey=$(mapkey "$key")
 mapkey() {
-  echo "-$1-" >> log.log
   case "$1" in
     "$f1") echo "f1";;
     "$f2") echo "f2";;
@@ -65,7 +64,6 @@ mapkey() {
 # these functions are mapped in log.cfg in the function map section
 # if no function is found, the key appendbuff is called
 execfunc() {
-  echo "KEY:$1: MODE:$2:" >> log.log
   # create a named function based on the key and mode
   func="$2$1"
   if [[ "$func" =~ ^[[:alnum:]]*$ ]] && [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
@@ -80,17 +78,19 @@ execfunc() {
 cwsend() {
   if [[ ! -z $1 ]]
   then
+    lastaction="$1"
+    drawlastaction
     $keyer -w $speed -d $cwdevice -t "$1" &
   fi
 }
 
 qrq() {
-  let speed+=5
-  menu
+  speed="$(($speed+5))"
+  drawstatus
 }
 qrs() {
-  let speed-=5
-  menu
+  speed="$(($speed-5))"
+  drawstatus
 }
 runqrq=qrq
 sandpqrq=qrq
@@ -124,8 +124,7 @@ sendmycall() {
  cwsend "$mycall"
 }
 sendtu() {
-  local e1=$(gete1)
-  cwsend "TU $e1"
+  cwsend "TU"
 }
 sendagn() {
  cwsend "$myagn"
@@ -152,13 +151,13 @@ logqso() {
   echo "   <RST_RCVD:${#recvrs}>$recvrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <COMMENT:${#comments}>$comments" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
-  let qsocount+=1
+  qsocount="$(($qsocount+1))"
+  serial="$(($serial+1))"
   menu
 }
 
 send_tu_exchange_logqso() {
-  local e1=$(gete1)
-  cwsend "TU $e1 $myexchange"
+  cwsend "TU $myexchange"
   logqso
   clearbuff
 }
@@ -219,7 +218,8 @@ tab() {
   if [[ $(grep -i "$buff" "$callfile" | wc -l)  -eq 1 ]]
   then
     local buffexchange=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f2-)
-    buff="$buff $buffexchange"
+    local call=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f1)
+    buff="$call $buffexchange"
     subbuff=""
     menu
   else
@@ -259,8 +259,8 @@ menu() {
   clearscreen
   tput cup $menuline 0
   buffline=0
-  status="Mode: $logmode  Speed: $speed Call: $mycall QSO: $qsocount"
   drawstatus
+  drawlastaction
   # build the function map for the menu
   for i in {1..9}
   do
@@ -273,8 +273,8 @@ menu() {
     fi
   done
   let buffline+=1
-  drawbuff
   drawsubmenu
+  drawbuff
 }
 
 
@@ -282,6 +282,15 @@ menu() {
 clearline() {
   tput cup $1 0
   tput el
+}
+
+drawlastaction() {
+  tput sc
+  clearline $lastactionline
+  tput dim
+  echo "Last action: $lastaction"
+  tput sgr0
+  tput rc 
 }
 
 # takes a single argument of the text to append to buff
@@ -308,9 +317,9 @@ drawbuff() {
 }
 
 drawstatus() {
+  status="Mode: $logmode  Speed: $speed Call: $mycall QSO: $qsocount"
   tput sc
   clearline $statusline
-  tput clear
   tput bold
   echo "$status"
   tput sgr0
@@ -332,8 +341,10 @@ drawsubmenu() {
 mainloop() {
   buff=""
   subbuff=""
+  lastaction=""
   statusline=0
-  menuline=1
+  lastactionline=1
+  menuline=2
   qsocount=0
   menu
   while true
