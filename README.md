@@ -1,5 +1,9 @@
-CLogger is a very simple console based logger for ham radio.
+#CLogger
 
-It is a single, very small, bash script that uses the "dialog" tool, and pre-defined variables to quickly collect data about QSOs and save them concat them to a log file.
+CLogger is a light weight contest logger that is primarily desgined to be used in CW contesting in conjunction with [CWkeyer](https://github.com/etamme/cwkeyer), as a very simple serial keying interface.
 
-Logs are concatenated to the log file in ADIF (LOTW Compatible) format, in a easy to read structure,  for easy upload with TQSL, or use with other log processing tools.
+It features: 
+-Run, and search and pounce modes  
+-Dynamic function key configuration 
+-Call and exchange auto fills from callfile
+-LOTW compatible ADIF output
