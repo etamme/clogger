@@ -16,7 +16,7 @@ readkey() {
 }
 
 # Use tput to support portable multi char keypresses
-# TERM has to be set correctly for this to work. 
+# TERM has to be set correctly for this to work.
 initkeys() {
   tput init
   f1=$(tput kf1)
@@ -31,6 +31,8 @@ initkeys() {
   f10=$(tput kf10)
   back=$(tput kbs)
   enter=$(tput nel)
+  escape=$'\e'
+  tab=$'\t'
 }
 
 # takes a single argument of the keyvalue (from readkey)
@@ -50,34 +52,14 @@ mapkey() {
     "$f9") echo "f9";;
     "$enter") echo "enter";;
     "$back") echo "back";;
+    "$escape") echo "escape";;
+    "$tab") echo "tab";;
     " ") echo "space";;
-    "	") echo "tab";;
     *) echo "$1";;
   esac
 }
 
-menu() {
-  lines=0
-  tput clear
-  tput bold
-  echo "Mode: $logmode  Speed: $speed"
-  tput sgr0
-  # build the function map for the menu
-  for i in {1..9}
-  do
-    f="f$i"
-    func="$logmode$f"
-    if [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
-    then
-      let lines+=1 
-      echo -e "$f: ${!func}"
-    fi
-  done
 
-  echo "Last operation: $status"
-  echo -n ">$buff"
-  let lines+=2
-}
 
 # this expects the keyname as arg1, and the logmode as arg2
 # these functions are mapped in log.cfg in the function map section
@@ -96,7 +78,10 @@ execfunc() {
 
 # arg1: text
 cwsend() {
-  $keyer -w $speed -d $cwdevice -t "$1"
+  if [[ ! -z $1 ]]
+  then
+    $keyer -w $speed -d $cwdevice -t "$1" &
+  fi
 }
 
 qrq() {
@@ -111,6 +96,16 @@ runqrq=qrq
 sandpqrq=qrq
 runqrs=qrs
 sandpqrs=qrs
+
+getcall() {
+  local val=$(echo "$buff" | cut -d' ' -f1)
+  echo "$val"
+}
+
+gete1() {
+  local val=$(echo "$buff" | cut -d' ' -f2)
+  echo "$val"
+}
 
 # these are the defined functions that you can map f1-f9 to for each mode
 sendbuff() {
@@ -129,11 +124,13 @@ sendmycall() {
  cwsend "$mycall"
 }
 sendtu() {
-  cwsend "TU"
+  local e1=$(gete1)
+  cwsend "TU $e1"
 }
 sendagn() {
  cwsend "$myagn"
 }
+
 logqso() {
   dxcall=$(echo "$buff" | cut -d' ' -f1)
   decall="$mycall"
@@ -155,88 +152,189 @@ logqso() {
   echo "   <RST_RCVD:${#recvrs}>$recvrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <COMMENT:${#comments}>$comments" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
-  status="QSO logged"
+  let qsocount+=1
   menu
 }
 
 send_tu_exchange_logqso() {
-  sendtu
-  sendexchange
+  local e1=$(gete1)
+  cwsend "TU $e1 $myexchange"
   logqso
   clearbuff
 }
 
-send_buff_exchange() {
-  sendbuff
-  sendexchange
+send_call_exchange() {
+  local call=$(getcall)
+  cwsend "$call $myexchange"
 }
 
 send_tu_logqso_cq() {
-  sendtu
+  local e1=$(gete1)
+  cwsend "TU $e1 $mycq"
   logqso
-  sendcq
   clearbuff
 }
 
 togglemode() {
   if [[ "$logmode" == "run" ]]
-  then 
+  then
     logmode="sandp"
   else
     logmode="run"
   fi
+  clearbuff
   menu
 }
 
+
+#
+# ------------ functions for special key bindings ---------------
+#              enter, tab, backspace, escape, space
+#
+
+# in both modes, enter simply sends what is in the buffer
 runenter() {
   sendbuff
 }
-
 sandpenter() {
   sendbuff
 }
 
+# kills any current keyer process to halt transmission
+escape() {
+  pid=""
+  pid=$(pgrep -f "$keyer")
+  if [[ ! -z $pid ]]
+  then
+    kill -9 $pid
+    wait $pid 2>/dev/null
+  fi
+}
+runescape=escape
+sandpescape=escape
+
+# auto completes the first column of the callfile if there are multiple matches
+# if there is a single match, it pulls the exchange portion from the callfile
 tab() {
-  status="TAB"
+  if [[ $(grep -i "$buff" "$callfile" | wc -l)  -eq 1 ]]
+  then
+    local buffexchange=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f2-)
+    buff="$buff $buffexchange"
+    subbuff=""
+    menu
+  else
+    subbuff=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f1)
+    drawsubmenu
+  fi
 }
 runtab=tab
 sandptab=tab
 
+# appends a space to the buffer
 space() {
   appendbuff " "
 }
 runspace=space
 sandpspace=space
 
-clearbuff() {
-  buff=""
-  tput el1
-  tput cup $lines 0
-  echo -n ">$buff"
-}
-
+# remove a char from the buffer
 backspace() {
   if [[ ! -z "$buff" ]]
   then
     buff="${buff:0:-1}"
     tput el1
-    tput cup $lines 0
+    tput cup $buffline 0
     echo -n ">$buff"
   fi
 }
 runback="backspace"
 sandpback="backspace"
 
+#
+# ------------ drawing routines ---------------
+#
+
+# draw the main menu screen and calculate buffline
+menu() {
+  clearscreen
+  tput cup $menuline 0
+  buffline=0
+  status="Mode: $logmode  Speed: $speed Call: $mycall QSO: $qsocount"
+  drawstatus
+  # build the function map for the menu
+  for i in {1..9}
+  do
+    f="f$i"
+    func="$logmode$f"
+    if [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
+    then
+      let buffline+=1
+      echo -e "$f: ${!func}"
+    fi
+  done
+  let buffline+=1
+  drawbuff
+  drawsubmenu
+}
+
+
+# takes a single argument of the line number to clear
+clearline() {
+  tput cup $1 0
+  tput el
+}
+
 # takes a single argument of the text to append to buff
 appendbuff() {
   buff="$buff$1"
   tput el1
-  tput cup $lines 0
+  tput cup $buffline 0
   echo -n ">$buff"
 }
 
+clearbuff() {
+  buff=""
+  drawbuff
+}
+
+clearscreen() {
+  tput clear
+}
+
+drawbuff() {
+  clearline $buffline
+  tput cup $buffline 0
+  echo -n ">$buff"
+}
+
+drawstatus() {
+  tput sc
+  clearline $statusline
+  tput clear
+  tput bold
+  echo "$status"
+  tput sgr0
+  tput rc
+}
+
+drawsubmenu() {
+  tput sc
+  let subline=$buffline+2
+  tput cup $subline 0
+  echo $subbuff
+  tput rc
+}
+
+#
+# ------------ main loop and script init ---------------
+#
+
 mainloop() {
   buff=""
+  subbuff=""
+  statusline=0
+  menuline=1
+  qsocount=0
   menu
   while true
   do
