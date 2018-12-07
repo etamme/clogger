@@ -140,9 +140,11 @@ logqso() {
   sentrs="599"
   recvrs="599"
   comments=$(echo "$buff" | cut -d' ' -f2-)
+  khz=$($rigctl -m $rig -r $rigdevice f)
+  mhz=$(bc <<< "scale = 4; ($khz/1000000)")
   echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
-  echo "   <FREQ:${#frequency}>$frequency" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <FREQ:${#mhz}>$mhz" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <MODE:${#mode}>$mode" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <QSO_DATE:${#date}>$date" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <TIME_ON:${#timeon}>$timeon" | tr '[:lower:]' '[:upper:]' >> "$logfile"
@@ -231,7 +233,8 @@ tab() {
     local call=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f1)
     buff="$call $buffexchange"
     subbuff=""
-    menu
+    drawbuff
+    drawsubmenu
   else
     subbuff=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f1)
     drawsubmenu
@@ -365,6 +368,7 @@ drawsubmenu() {
   tput sc
   let subline=$buffline+2
   tput cup $subline 0
+  tput ed
   echo $subbuff
   tput rc
 }
