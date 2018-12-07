@@ -54,7 +54,12 @@ mapkey() {
     "$escape") echo "escape";;
     "$tab") echo "tab";;
     " ") echo "space";;
-    *) echo "$1";;
+    *) 
+       if [[ "$1" =~ ^[[:alnum:]]*$ ]] || [[ "$1" =~ ^[[:punct:]]*$ ]]
+       then
+         echo "$1"
+       fi
+       ;;
   esac
 }
 
@@ -140,7 +145,7 @@ logqso() {
   sentrs="599"
   recvrs="599"
   comments=$(echo "$buff" | cut -d' ' -f2-)
-  khz=$($rigctl -m $rig -r $rigdevice f)
+  khz=$($rigctl -m $rig -r $rigdevice "f")
   mhz=$(bc <<< "scale = 4; ($khz/1000000)")
   echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
@@ -190,7 +195,7 @@ togglemode() {
 
 # arg1 is call to check
 checkdupe() {
-  if grep -qi "$1" "$logfile"
+  if fgrep -qiF "$1" "$logfile" 
   then
     echo "true"
   else
@@ -202,14 +207,57 @@ checkdupe() {
 # ------------ functions for special key bindings ---------------
 #              enter, tab, backspace, escape, space
 #
+runcommand() {
+  local prefix=$(echo "$1" | cut -d' ' -f1)
+  if [[ "$prefix" == ":rig" ]]
+  then
+    local rigargs=$(echo "$1" | cut -d' ' -f2-)
+    rigcommand "$rigargs"
+    subbuff="$rigres"
+    drawsubmenu
+  else
+    case "$prefix" in
+    ":quit") echo "" && exit ;;
+    ":freq") setfreq $(echo "$1" | cut -d' ' -f2) ;;
+    *) buff="unknown command $prefix" && drawbuff ;;
+    esac
+  fi
+}
+
+rigcommand() {
+  local arg1=$(echo "$1" | cut -d' ' -f1)
+  rigres=$($rigctl -m $rig -r $rigdevice $1)
+  clearbuff
+  if [[ "$arg1" == "F" ]]
+  then
+    freq="$rigres"
+    drawstatus
+  fi
+}
+
+# arg1 is frequency
+setfreq() {
+  rigcommand "F $1"
+  freq=$1
+  drawstatus
+}
+
+getfreq() {
+  rigcommand "f"
+  freq="$rigres" 
+}
 
 # in both modes, enter simply sends what is in the buffer
-runenter() {
-  sendbuff
+enter() {
+  if [[ "${buff:0:1}" == ":" ]]
+  then
+    runcommand "$buff"
+  else
+    sendbuff
+  fi
 }
-sandpenter() {
-  sendbuff
-}
+runenter=enter
+sandpenter=enter
 
 # kills any current keyer process to halt transmission
 escape() {
@@ -259,6 +307,8 @@ backspace() {
     then
       local call=$(echo "$buff" | cut -d' ' -f1)
       dupe=$(checkdupe "$call")
+    else
+      dupe="false"
     fi
 
     if [[ "$dupe" == "true" ]]
@@ -355,7 +405,7 @@ drawbuff() {
 }
 
 drawstatus() {
-  status="Mode: $logmode  Speed: $speed Call: $mycall QSO: $qsocount"
+  status="Mode: $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount"
   tput sc
   clearline $statusline
   tput bold
@@ -378,6 +428,10 @@ drawsubmenu() {
 #
 
 mainloop() {
+  if [ ! -f "$logfile" ]; then
+    touch "$logfile"
+  fi
+  getfreq
   buff=""
   subbuff=""
   lastaction=""
