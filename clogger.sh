@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # load config elements
-source clogger.cfg
+#source clogger.cfg
+source my.cfg
+source "$contest"
 
 # This function reads keys, including special function keys
 readkey() {
@@ -81,7 +83,7 @@ execfunc() {
 
 # arg1: text
 cwsend() {
-  if [[ ! -z $1 ]]
+  if [[ ! -z $1 ]] && [[ "$usekeyer" == "true" ]]
   then
     lastaction="$1"
     drawlastaction
@@ -145,8 +147,8 @@ logqso() {
   sentrs="599"
   recvrs="599"
   comments=$(echo "$buff" | cut -d' ' -f2-)
-  khz=$($rigctl -m $rig -r $rigdevice "f")
-  mhz=$(bc <<< "scale = 4; ($khz/1000000)")
+#  khz=$($rigctl -m $rig -r $rigdevice "f")
+#  mhz=$(bc <<< "scale = 4; ($khz/1000000)")
   echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <FREQ:${#mhz}>$mhz" | tr '[:lower:]' '[:upper:]' >> "$logfile"
@@ -176,6 +178,12 @@ send_call_exchange() {
 }
 
 send_tu_logqso_cq() {
+  cwsend "TU $mycq"
+  logqso
+  clearbuff
+}
+
+send_tu_e1_logqso_cq() {
   local e1=$(gete1)
   cwsend "TU $e1 $mycq"
   logqso
@@ -218,6 +226,8 @@ runcommand() {
   else
     case "$prefix" in
     ":quit") echo "" && exit ;;
+    ":qrs") qrs ;;
+    ":qrq") qrq ;;
     ":freq") setfreq $(echo "$1" | cut -d' ' -f2) ;;
     *) buff="unknown command $prefix" && drawbuff ;;
     esac
@@ -225,13 +235,16 @@ runcommand() {
 }
 
 rigcommand() {
-  local arg1=$(echo "$1" | cut -d' ' -f1)
-  rigres=$($rigctl -m $rig -r $rigdevice $1)
-  clearbuff
-  if [[ "$arg1" == "F" ]]
+  if [[ "$userig"  == "true" ]]
   then
-    freq="$rigres"
-    drawstatus
+    local arg1=$(echo "$1" | cut -d' ' -f1)
+    rigres=$($rigctl -m $rig -r $rigdevice $1)
+    clearbuff
+    if [[ "$arg1" == "F" ]]
+    then
+      freq="$rigres"
+      drawstatus
+    fi
   fi
 }
 
@@ -277,15 +290,17 @@ sandpescape=escape
 tab() {
   if [[ $(grep -i "$buff" "$callfile" | wc -l)  -eq 1 ]]
   then
-    local buffexchange=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f2-)
+    local buffexchange=$(grep -i "^$buff" "$callfile" | cut -d"$delimeter" -f2- | tr "$delimeter" ' ')
     local call=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f1)
     buff="$call $buffexchange"
     subbuff=""
     drawbuff
     drawsubmenu
+    echo "single" >> debug
   else
-    subbuff=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f1)
+    subbuff=$(grep -i "^$buff" "$callfile" | cut -d"$delimeter" -f1 | tr '\r\n' ' ')
     drawsubmenu
+    echo "$subbuff" >> debug
   fi
 }
 runtab=tab
@@ -440,6 +455,7 @@ mainloop() {
   lastactionline=1
   menuline=2
   qsocount=0
+  serial=1
   menu
   while true
   do

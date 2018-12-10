@@ -4,3 +4,5 @@ keyer.py
 rigctl
 my.cfg
 callfile.txt
+logs/*
+callfiles/*
