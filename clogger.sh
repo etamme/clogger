@@ -5,8 +5,13 @@
 source my.cfg
 source "$contest"
 
+# turn on or off verbose debug logs
+debugon="false"
+debuglog="./debug"
+
 # This function reads keys, including special function keys
 readkey() {
+  debug "${FUNCNAME[0]}"
   local key settings
   settings=$(stty -g)             # save terminal settings
   stty -icanon -echo min 0        # disable buffering/echo, allow read to poll
@@ -15,11 +20,13 @@ readkey() {
   key=$(dd count=1 2> /dev/null)  # do a single read(2) call
   stty "$settings"                # restore terminal settings
   printf "%s" "$key"
+  debug "rawkey: '$key'"
 }
 
 # Use tput to support portable multi char keypresses
 # TERM has to be set correctly for this to work.
 initkeys() {
+  debug "${FUNCNAME[0]}"
   tput init
   f1=$(tput kf1)
   f2=$(tput kf2)
@@ -41,6 +48,7 @@ initkeys() {
 # designed to be called using command substitution
 # e.g.:  mappedkey=$(mapkey "$key")
 mapkey() {
+  debug "${FUNCNAME[0]}"
   case "$1" in
     "$f1") echo "f1";;
     "$f2") echo "f2";;
@@ -65,14 +73,21 @@ mapkey() {
   esac
 }
 
-
+debug() {
+  if [[ "$debugon" == "true" ]]
+  then
+    echo "$1" >> "$debuglog"
+  fi
+}
 
 # this expects the keyname as arg1, and the logmode as arg2
 # these functions are mapped in log.cfg in the function map section
 # if no function is found, the key appendbuff is called
 execfunc() {
+  debug "${FUNCNAME[0]}"
   # create a named function based on the key and mode
   func="$2$1"
+  debug "$func"
   if [[ "$func" =~ ^[[:alnum:]]*$ ]] && [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
   then
     # when running the sendcq function, run it in background and capture the pid
@@ -80,17 +95,21 @@ execfunc() {
     then
       ${!func} &
       cqpid=$!
+      debug "sendcq cqpid: $cqpid"
     else
       ${!func}
     fi
   else
+    debug "appendbuff $1"
     appendbuff "$1"
   fi
 }
 
 killcqpid() {
+  debug "${FUNCNAME[0]}"
   if [[ ! -z "$cqpid" ]]
   then
+    debug "kill -9 $cqpid"
     kill -9 $cqpid
     wait $pid 2>/dev/null
     cqpid=""
@@ -99,6 +118,7 @@ killcqpid() {
 
 # arg1: text arg2: async/sync (default to async)
 cwsend() {
+  debug "${FUNCNAME[0]}"
   if [[ ! -z $1 ]] && [[ "$usekeyer" == "true" ]]
   then
     lastaction="$1"
@@ -113,10 +133,12 @@ cwsend() {
 }
 
 qrq() {
+  debug "${FUNCNAME[0]}"
   speed="$(($speed+5))"
   drawstatus
 }
 qrs() {
+  debug "${FUNCNAME[0]}"
   speed="$(($speed-5))"
   drawstatus
 }
@@ -126,21 +148,25 @@ runqrs=qrs
 sandpqrs=qrs
 
 getcall() {
+  debug "${FUNCNAME[0]}"
   local val=$(echo "$buff" | cut -d' ' -f1)
   echo "$val"
 }
 
 gete1() {
+  debug "${FUNCNAME[0]}"
   local val=$(echo "$buff" | cut -d' ' -f2)
   echo "$val"
 }
 
 # these are the defined functions that you can map f1-f9 to for each mode
 sendbuff() {
- cwsend "$buff"
+  debug "${FUNCNAME[0]}"
+  cwsend "$buff"
 }
 
 sendcq() {
+  debug "${FUNCNAME[0]}"
  while true
  do
    cwsend "$mycq" "sync"
@@ -149,20 +175,25 @@ sendcq() {
 }
 
 sendexchange() {
- cwsend "$myexchange"
+  debug "${FUNCNAME[0]}"
+  cwsend "$myexchange"
 }
 
 sendmycall() {
- cwsend "$mycall"
+  debug "${FUNCNAME[0]}"
+  cwsend "$mycall"
 }
 sendtu() {
+  debug "${FUNCNAME[0]}"
   cwsend "TU"
 }
 sendagn() {
- cwsend "$myagn"
+  debug "${FUNCNAME[0]}"
+  cwsend "$myagn"
 }
 
 logqso() {
+  debug "${FUNCNAME[0]}"
   dxcall=$(echo "$buff" | cut -d' ' -f1)
   decall="$mycall"
   band="20M"
@@ -188,27 +219,34 @@ logqso() {
   qsocount="$(($qsocount+1))"
   serial="$(($serial+1))"
   dupe="false"
+  lastaction="Logged $buff"
+  drawlastaction
+  clearbuff
   menu
 }
 
 send_tu_exchange_logqso() {
+  debug "${FUNCNAME[0]}"
   cwsend "TU $myexchange"
   logqso
   clearbuff
 }
 
 send_call_exchange() {
+  debug "${FUNCNAME[0]}"
   local call=$(getcall)
   cwsend "$call $myexchange"
 }
 
 send_tu_logqso_cq() {
+  debug "${FUNCNAME[0]}"
   cwsend "TU $mycq"
   logqso
   clearbuff
 }
 
 send_tu_e1_logqso_cq() {
+  debug "${FUNCNAME[0]}"
   local e1=$(gete1)
   cwsend "TU $e1 $mycq"
   logqso
@@ -216,6 +254,7 @@ send_tu_e1_logqso_cq() {
 }
 
 togglemode() {
+  debug "${FUNCNAME[0]}"
   if [[ "$logmode" == "run" ]]
   then
     logmode="sandp"
@@ -228,6 +267,7 @@ togglemode() {
 
 # arg1 is call to check
 checkdupe() {
+  debug "${FUNCNAME[0]}"
   if fgrep -qiF "$1" "$logfile" 
   then
     echo "true"
@@ -241,6 +281,7 @@ checkdupe() {
 #              enter, tab, backspace, escape, space
 #
 runcommand() {
+  debug "${FUNCNAME[0]}"
   local prefix=$(echo "$1" | cut -d' ' -f1)
   if [[ "$prefix" == ":rig" ]]
   then
@@ -260,6 +301,7 @@ runcommand() {
 }
 
 rigcommand() {
+  debug "${FUNCNAME[0]}"
   if [[ "$userig"  == "true" ]]
   then
     local arg1=$(echo "$1" | cut -d' ' -f1)
@@ -275,18 +317,21 @@ rigcommand() {
 
 # arg1 is frequency
 setfreq() {
+  debug "${FUNCNAME[0]}"
   rigcommand "F $1"
   freq=$1
   drawstatus
 }
 
 getfreq() {
+  debug "${FUNCNAME[0]}"
   rigcommand "f"
   freq="$rigres" 
 }
 
 # in both modes, enter simply sends what is in the buffer
 enter() {
+  debug "${FUNCNAME[0]}"
   if [[ "${buff:0:1}" == ":" ]]
   then
     runcommand "$buff"
@@ -299,6 +344,7 @@ sandpenter=enter
 
 # kills any current keyer process to halt transmission
 escape() {
+  debug "${FUNCNAME[0]}"
   pid=""
   pid=$(pgrep -f "$keyer")
   if [[ ! -z $pid ]]
@@ -313,16 +359,21 @@ sandpescape=escape
 # auto completes the first column of the callfile if there are multiple matches
 # if there is a single match, it pulls the exchange portion from the callfile
 tab() {
-  if [[ $(grep -i "$buff" "$callfile" | wc -l)  -eq 1 ]]
+  debug "${FUNCNAME[0]}"
+  local callbuff=$(echo "$buff" | tr " " "$delimeter")
+  if [[ $(grep -i "$callbuff" "$callfile" | wc -l)  -eq 1 ]]
   then
-    local buffexchange=$(grep -i "^$buff" "$callfile" | cut -d"$delimeter" -f2- | tr "$delimeter" ' ')
-    local call=$(grep -i "$buff" "$callfile" | cut -d"$delimeter" -f1)
+    local buffexchange=$(grep -i "^$callbuff" "$callfile" | cut -d"$delimeter" -f2- | tr "$delimeter" ' ')
+    echo "grep -i \"$callbuff\" \"$callfile\" | cut -d\"$delimeter\" -f1)" >> debug
+    local call=$(grep -i "$callbuff" "$callfile" | cut -d"$delimeter" -f1)
     buff="$call $buffexchange"
     subbuff=""
+    echo "single: $callbuff" >> debug
     drawbuff
     drawsubmenu
   else
-    subbuff=$(grep -i "^$buff" "$callfile" | cut -d"$delimeter" -f1 | tr '\r\n' ' ')
+    subbuff=$(grep -i "^$callbuff" "$callfile" | cut -d"$delimeter" -f1 | tr '\r\n' ' ')
+    echo "mult: $callbuff" >> debug
     drawsubmenu
   fi
 }
@@ -331,6 +382,7 @@ sandptab=tab
 
 # appends a space to the buffer
 space() {
+  debug "${FUNCNAME[0]}"
   appendbuff " "
 }
 runspace=space
@@ -338,6 +390,7 @@ sandpspace=space
 
 # remove a char from the buffer
 backspace() {
+  debug "${FUNCNAME[0]}"
   if [[ ! -z "$buff" ]]
   then
     buff="${buff:0:-1}"
@@ -369,6 +422,7 @@ sandpback="backspace"
 
 # draw the main menu screen and calculate buffline
 menu() {
+  debug "${FUNCNAME[0]}"
   clearscreen
   tput cup $menuline 0
   buffline=0
@@ -393,11 +447,13 @@ menu() {
 
 # takes a single argument of the line number to clear
 clearline() {
+  debug "${FUNCNAME[0]}"
   tput cup $1 0
   tput el
 }
 
 drawlastaction() {
+  debug "${FUNCNAME[0]}"
   tput sc
   clearline $lastactionline
   tput dim
@@ -408,6 +464,7 @@ drawlastaction() {
 
 # takes a single argument of the text to append to buff
 appendbuff() {
+  debug "${FUNCNAME[0]}"
   buff="$buff$1"
   tput el1
 
@@ -427,15 +484,18 @@ appendbuff() {
 }
 
 clearbuff() {
+  debug "${FUNCNAME[0]}"
   buff=""
   drawbuff
 }
 
 clearscreen() {
+  debug "${FUNCNAME[0]}"
   tput clear
 }
 
 drawbuff() {
+  debug "${FUNCNAME[0]}"
   clearline $buffline
   tput cup $buffline 0
   echo -n ">$buff"
@@ -443,6 +503,7 @@ drawbuff() {
 }
 
 drawstatus() {
+  debug "${FUNCNAME[0]}"
   status="Mode: $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount"
   tput sc
   clearline $statusline
@@ -453,6 +514,7 @@ drawstatus() {
 }
 
 drawsubmenu() {
+  debug "${FUNCNAME[0]}"
   tput sc
   let subline=$buffline+2
   tput cup $subline 0
@@ -466,6 +528,8 @@ drawsubmenu() {
 #
 
 mainloop() {
+  debug "${FUNCNAME[0]}"
+  debug "my pid $BASHPID"
   if [ ! -f "$logfile" ]; then
     touch "$logfile"
   fi
