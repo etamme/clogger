@@ -296,11 +296,9 @@ tab() {
     subbuff=""
     drawbuff
     drawsubmenu
-    echo "single" >> debug
   else
     subbuff=$(grep -i "^$buff" "$callfile" | cut -d"$delimeter" -f1 | tr '\r\n' ' ')
     drawsubmenu
-    echo "$subbuff" >> debug
   fi
 }
 runtab=tab
