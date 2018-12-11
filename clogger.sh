@@ -2,7 +2,7 @@
 
 # load config elements
 #source clogger.cfg
-source my.cfg
+source clogger.cfg
 source "$contest"
 
 # turn on or off verbose debug logs
