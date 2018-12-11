@@ -75,19 +75,40 @@ execfunc() {
   func="$2$1"
   if [[ "$func" =~ ^[[:alnum:]]*$ ]] && [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
   then
-    ${!func}
+    # when running the sendcq function, run it in background and capture the pid
+    if [[ "${!func}" == "sendcq" ]]
+    then
+      ${!func} &
+      cqpid=$!
+    else
+      ${!func}
+    fi
   else
     appendbuff "$1"
   fi
 }
 
-# arg1: text
+killcqpid() {
+  if [[ ! -z "$cqpid" ]]
+  then
+    kill -9 $cqpid
+    wait $pid 2>/dev/null
+    cqpid=""
+  fi
+}
+
+# arg1: text arg2: async/sync (default to async)
 cwsend() {
   if [[ ! -z $1 ]] && [[ "$usekeyer" == "true" ]]
   then
     lastaction="$1"
     drawlastaction
-    $keyer -w $speed -d $cwdevice -t "$1" &
+    if [[ "$2" == "sync" ]]
+    then
+      $keyer -w $speed -d $cwdevice -t "$1"
+    else
+      $keyer -w $speed -d $cwdevice -t "$1" &
+    fi
   fi
 }
 
@@ -120,7 +141,11 @@ sendbuff() {
 }
 
 sendcq() {
- cwsend "$mycq"
+ while true
+ do
+   cwsend "$mycq" "sync"
+   sleep $cqdelay
+ done
 }
 
 sendexchange() {
@@ -454,11 +479,13 @@ mainloop() {
   menuline=2
   qsocount=0
   serial=1
+  cqpid=""
   menu
   while true
   do
     key=$(readkey)
     mappedkey=$(mapkey "$key")
+    killcqpid
     execfunc "$mappedkey" "$logmode"
   done
 }
