@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # load config elements
-#source clogger.cfg
 source clogger.cfg
 source "$contest"
 
