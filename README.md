@@ -1,4 +1,4 @@
-#CLogger
+# CLogger
 
 CLogger is a light weight contest logger that is primarily desgined to be used in CW contesting in conjunction with [CWkeyer](https://github.com/etamme/cwkeyer), as a very simple serial keying interface.
 
