@@ -202,7 +202,13 @@ logqso() {
   timeon=$(date -u +%H%M)
   sentrs="599"
   recvrs="599"
-  comments=$(echo "$buff" | cut -d' ' -f2-)
+  # strip non-printable chars from buffer when setting comments
+  comments=$(echo "$buff" | cut -d' ' -f2- | tr -cd "[:print:]")
+  if [[ ! -z "$contestname" ]]
+  then
+    comments="$comments - $contestname"
+  fi
+  debug "$comments"
   getfreq
   khz="$freq"
   mhz=$(bc <<< "scale = 4; ($khz/1000000)")
