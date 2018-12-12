@@ -203,8 +203,9 @@ logqso() {
   sentrs="599"
   recvrs="599"
   comments=$(echo "$buff" | cut -d' ' -f2-)
-#  khz=$($rigctl -m $rig -r $rigdevice "f")
-#  mhz=$(bc <<< "scale = 4; ($khz/1000000)")
+  getfreq
+  khz="$freq"
+  mhz=$(bc <<< "scale = 4; ($khz/1000000)")
   echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <FREQ:${#mhz}>$mhz" | tr '[:lower:]' '[:upper:]' >> "$logfile"
@@ -306,7 +307,6 @@ rigcommand() {
   then
     local arg1=$(echo "$1" | cut -d' ' -f1)
     rigres=$($rigctl -m $rig -r $rigdevice $1)
-    clearbuff
     if [[ "$arg1" == "F" ]]
     then
       freq="$rigres"
