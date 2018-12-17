@@ -1,8 +1,5 @@
-clogger.log
-log.adi
 keyer.py
 rigctl
-my.cfg
-callfile.txt
+*.adi
 logs/*
 callfiles/*
