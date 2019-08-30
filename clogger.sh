@@ -8,6 +8,7 @@ source "$contest"
 # turn on or off verbose debug logs
 debugon="false"
 debuglog="./debug"
+echo "" > "$debuglog"
 
 # This function reads keys, including special function keys
 readkey() {
@@ -119,14 +120,18 @@ killcqpid() {
 # arg1: text arg2: async/sync (default to async)
 cwsend() {
   debug "${FUNCNAME[0]}"
+  debug "$1 usekeyer=$usekeyer"
   if [[ ! -z $1 ]] && [[ "$usekeyer" == "true" ]]
   then
+    debug "passed cwsend tests"
     lastaction="$1"
     drawlastaction
     if [[ "$2" == "sync" ]]
     then
+      debug "$keyer -w $speed -d $cwdevice -t \"$1\""
       $keyer -w $speed -d $cwdevice -t "$1"
     else
+      debug "$keyer -w $speed -d $cwdevice -t \"$1\" &"
       $keyer -w $speed -d $cwdevice -t "$1" &
     fi
   fi
@@ -358,6 +363,7 @@ escape() {
     kill -9 $pid
     wait $pid 2>/dev/null
   fi
+  cwsend "e"
 }
 runescape=escape
 sandpescape=escape
