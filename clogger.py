@@ -101,7 +101,7 @@ try:
       if(buffer_x_offset==0):
         main_buffer=main_buffer+key
       else:
-        main_buffer=main_buffer[:buffer_x_offset]+key+main_buffer[buffer_x_offset+1]
+        main_buffer=main_buffer[:buffer_x_offset]+key+main_buffer[buffer_x_offset+1:]
     stdscr.addstr(buffer_y,buffer_x,main_buffer)
     stdscr.addstr(stats_y,stats_x,f"buffer_x: {buffer_x}, cur_x: {cur_x}, buffer_x_offset: {buffer_x_offset}, main_buffer: {main_buffer} length: {len(main_buffer)}, keycode: {code}")
     stdscr.addstr(stats_y+1,stats_x,f"next move to {buffer_y}, {len(main_buffer)+buffer_x_offset}")
