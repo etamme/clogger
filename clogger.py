@@ -19,19 +19,26 @@ keymap={10:"ENTER",
         259:"ARROW_UP",
         260:"ARROW_LEFT",
         261:"ARROW_RIGHT",
+        262:"HOME",
         263:"BACKSP",
         265:"F1",
-        266:"F1",
-        267:"F2",
-        268:"F3",
-        269:"F4",
-        270:"F5",
-        271:"F6",
+        266:"F2",
+        267:"F3",
+        268:"F4",
+        269:"F5",
+        270:"F6",
+        271:"F7",
         272:"F8",
         273:"F9",
         274:"F10",
         275:"F11",
-        276:"F12"}
+        276:"F12",
+        330:"DEL",
+        331:"INS",
+        338:"PGUP",
+        339:"PGDN",
+        360:"END"
+        }
 
 class RunState(Enum):
  IDLE=auto()
@@ -61,9 +68,9 @@ def getkey(screen):
   elif(curses.ascii.isspace(c)):
     key="KEY_SPACE"
   elif(curses.ascii.isctrl(c)):
-    key="CTRL_"+curses.ascii.unctrl(c)
+      key="CTRL_"+curses.ascii.unctrl(c)[1:]
   else: 
-    key="uknown-"+chr(c)
+    key=chr(c)
 #  print("%i",c)
   return (key,c)
  
@@ -90,7 +97,8 @@ try:
     stdscr.move(cur_y,cur_x)
 
     if(key=="BACKSP"):
-      main_buffer=main_buffer[0:-1]
+      if(len(main_buffer)>0):
+        main_buffer=main_buffer[0:-1]
     elif(key=="ARROW_LEFT"):
       if(buffer_x_offset+len(main_buffer) != 0):
         buffer_x_offset-=1
@@ -101,7 +109,10 @@ try:
       if(buffer_x_offset==0):
         main_buffer=main_buffer+key
       else:
-        main_buffer=main_buffer[:buffer_x_offset]+key+main_buffer[buffer_x_offset+1:]
+        if(buffer_x_offset<-1):
+          main_buffer=main_buffer[:buffer_x_offset]+key+main_buffer[buffer_x_offset+1:]
+        else:
+          main_buffer=main_buffer[:buffer_x_offset]+key
     stdscr.addstr(buffer_y,buffer_x,main_buffer)
     stdscr.addstr(stats_y,stats_x,f"buffer_x: {buffer_x}, cur_x: {cur_x}, buffer_x_offset: {buffer_x_offset}, main_buffer: {main_buffer} length: {len(main_buffer)}, keycode: {code}")
     stdscr.addstr(stats_y+1,stats_x,f"next move to {buffer_y}, {len(main_buffer)+buffer_x_offset}")
