@@ -74,6 +74,53 @@ def getkey(screen):
 #  print("%i",c)
   return (key,c)
  
+def process_key(key,code):
+  global buffer_x_offset
+  global main_buffer
+  if(key=="BACKSP"):
+    if(len(main_buffer)>0):
+       main_buffer=main_buffer[0:-1]
+  elif(key=="ARROW_LEFT"):
+    if(buffer_x_offset+len(main_buffer) != 0):
+      buffer_x_offset-=1
+  elif(key=="ARROW_RIGHT"):
+    if(buffer_x_offset!=0):
+      buffer_x_offset+=1
+  else:
+    if(buffer_x_offset==0):
+      main_buffer=main_buffer+key
+    else:
+      if(buffer_x_offset<-1):
+        main_buffer=main_buffer[:buffer_x_offset]+key+main_buffer[buffer_x_offset+1:]
+      else:
+        main_buffer=main_buffer[:buffer_x_offset]+key
+
+def clear_main_buffer(screen):
+    screen.move(buffer_y,0)
+    screen.clrtoeol()
+
+# should be called last of all drawing routines b/c it replaces the cursor to the
+# buffer_x_offset position
+def draw_main_buffer(screen):
+    screen.addstr(buffer_y,buffer_x,main_buffer)
+    stdscr.move(buffer_y,len(main_buffer)+buffer_x_offset)
+
+def update_main_buffer(screen):
+    clear_main_buffer(screen)
+    draw_main_buffer(screen)
+
+def clear_stats(screen):
+    screen.move(stats_y,0)
+    screen.clrtoeol()
+
+def draw_stats(screen):
+    (cur_y,cur_x)=screen.getyx()
+    screen.addstr(stats_y,stats_x,f"buffer_x: {buffer_x}, cur_x: {cur_x}, buffer_x_offset: {buffer_x_offset}, main_buffer: {main_buffer} length: {len(main_buffer)}, keycode: {code}")
+
+def update_stats(screen):
+    clear_stats(screen)
+    draw_stats(screen)
+
 # Main loop setup in try/finally to properly restore terminal in the event of crash
 try:
   # Standard startup
@@ -89,37 +136,12 @@ try:
 # get input forever
   while 1:
     (key,code) = getkey(stdscr)
-    (cur_y,cur_x)=stdscr.getyx()
-    stdscr.move(buffer_y,0)
-    stdscr.clrtoeol()
-    stdscr.move(stats_y,0)
-    stdscr.clrtoeol()
-    stdscr.move(cur_y,cur_x)
-
-    if(key=="BACKSP"):
-      if(len(main_buffer)>0):
-        main_buffer=main_buffer[0:-1]
-    elif(key=="ARROW_LEFT"):
-      if(buffer_x_offset+len(main_buffer) != 0):
-        buffer_x_offset-=1
-    elif(key=="ARROW_RIGHT"):
-      if(buffer_x_offset!=0):
-        buffer_x_offset+=1
-    else:
-      if(buffer_x_offset==0):
-        main_buffer=main_buffer+key
-      else:
-        if(buffer_x_offset<-1):
-          main_buffer=main_buffer[:buffer_x_offset]+key+main_buffer[buffer_x_offset+1:]
-        else:
-          main_buffer=main_buffer[:buffer_x_offset]+key
-    stdscr.addstr(buffer_y,buffer_x,main_buffer)
-    stdscr.addstr(stats_y,stats_x,f"buffer_x: {buffer_x}, cur_x: {cur_x}, buffer_x_offset: {buffer_x_offset}, main_buffer: {main_buffer} length: {len(main_buffer)}, keycode: {code}")
-    stdscr.addstr(stats_y+1,stats_x,f"next move to {buffer_y}, {len(main_buffer)+buffer_x_offset}")
-    stdscr.move(buffer_y,len(main_buffer)+buffer_x_offset)
+    clear_main_buffer(stdscr)
+    clear_stats(stdscr)
+    process_key(key,code)
+    update_stats(stdscr)
+    update_main_buffer(stdscr)
     stdscr.refresh()
-
-
 finally:
   # Standard shutdown
   curses.nocbreak()
