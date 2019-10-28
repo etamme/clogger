@@ -6,7 +6,7 @@ source clogger.cfg
 source "$contest"
 
 # turn on or off verbose debug logs
-debugon="false"
+debugon="true"
 debuglog="./debug"
 echo "" > "$debuglog"
 
@@ -179,9 +179,22 @@ sendcq() {
  done
 }
 
+update_exchange(){
+  serial_length=${#serial}
+  if [ "$serial_length"  == 1 ]
+  then
+    temp_serial="00$serial"
+  elif [ "$serial_length" == 2 ]
+  then
+    temp_serial="0$serial"
+  fi
+  temp_exchange="${myexchange/SERIAL/$temp_serial}"
+}
+
 sendexchange() {
+  update_exchange
   debug "${FUNCNAME[0]}"
-  cwsend "$myexchange"
+  cwsend "$temp_exchange"
 }
 
 sendmycall() {
@@ -201,7 +214,7 @@ logqso() {
   debug "${FUNCNAME[0]}"
   dxcall=$(echo "$buff" | cut -d' ' -f1)
   decall="$mycall"
-  band="20M"
+  band="20m"
   mode="CW"
   date=$(date -u +"%Y%m%d")
   timeon=$(date -u +%H%M)
@@ -230,6 +243,8 @@ logqso() {
   echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   qsocount="$(($qsocount+1))"
   serial="$(($serial+1))"
+  echo "QSO $qsocount" > ./.loginfo
+  echo "SERIAL $serial" >> ./.loginfo
   dupe="false"
   lastaction="Logged $buff"
   drawlastaction
@@ -239,15 +254,29 @@ logqso() {
 
 send_tu_exchange_logqso() {
   debug "${FUNCNAME[0]}"
-  cwsend "TU $myexchange"
+  update_exchange
+  cwsend "TU $temp_exchange"
+  logqso
+  clearbuff
+}
+
+send_tu_serial_exchange_logqso() {
+  debug "${FUNCNAME[0]}"
+  update_exchange
+  cwsend "TU $serial $temp_exchange"
   logqso
   clearbuff
 }
 
 send_call_exchange() {
   debug "${FUNCNAME[0]}"
+  update_exchange
   local call=$(getcall)
-  cwsend "$call $myexchange"
+  cwsend "$call $temp_exchange"
+}
+
+send_serial() {
+  cwsend "$serial"
 }
 
 send_tu_logqso_cq() {
@@ -304,6 +333,7 @@ runcommand() {
   else
     case "$prefix" in
     ":quit") echo "" && exit ;;
+    ":serial") setserial $(echo "$1" | cut -d' ' -f2) ;;
     ":qrs") qrs ;;
     ":qrq") qrq ;;
     ":freq") setfreq $(echo "$1" | cut -d' ' -f2) ;;
@@ -324,6 +354,12 @@ rigcommand() {
       drawstatus
     fi
   fi
+}
+# arg1 is serial
+setserial() {
+  debug "${FUNCNAME[0]}"
+  serial=$1
+  drawstatus
 }
 
 # arg1 is frequency
@@ -516,7 +552,7 @@ drawbuff() {
 
 drawstatus() {
   debug "${FUNCNAME[0]}"
-  status="Mode: $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount"
+  status="Mode: $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial"
   tput sc
   clearline $statusline
   tput bold
@@ -543,7 +579,12 @@ mainloop() {
   debug "${FUNCNAME[0]}"
   debug "my pid $BASHPID"
   if [ ! -f "$logfile" ]; then
+    debug "no log found clearing loginfo"
+    #remove loginfo file if no current log is found
+    rm ./.loginfo
     touch "$logfile"
+    qsocount=0
+    serial=1
   fi
   getfreq
   buff=""
@@ -553,9 +594,8 @@ mainloop() {
   statusline=0
   lastactionline=1
   menuline=2
-  qsocount=0
-  serial=1
   cqpid=""
+  temp_exchange="$myexchange"
   menu
   while true
   do
@@ -568,5 +608,11 @@ mainloop() {
 
 # we MUST initialize our keycodes
 initkeys
+#set serial and log count based on loginfo
+if test -f "./.loginfo"; then
+  debug "getting qso count and serial from loginfo"
+  qsocount=$(grep QSO .loginfo | cut -d' ' -f2)
+  serial=$(grep SERIAL .loginfo | cut -d' ' -f2)
+fi
 # call our main loop
 mainloop
