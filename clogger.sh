@@ -583,6 +583,8 @@ mainloop() {
     #remove loginfo file if no current log is found
     rm ./.loginfo
     touch "$logfile"
+    echo "<ADIF_VER:4>1.00" >> "$logfile"
+    echo "<EOH>" >> "$logfile"
     qsocount=0
     serial=1
   fi
