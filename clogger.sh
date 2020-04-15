@@ -187,7 +187,11 @@ update_exchange(){
   elif [ "$serial_length" == 2 ]
   then
     temp_serial="0$serial"
+  else
+    temp_serial=$serial
   fi
+  debug "temp_serial $temp_serial"
+  debug "serial $serial"
   temp_exchange="${myexchange/SERIAL/$temp_serial}"
 }
 
@@ -229,6 +233,7 @@ logqso() {
   debug "$comments"
   getfreq
   khz="$freq"
+  getband "$freq"
   mhz=$(bc <<< "scale = 4; ($khz/1000000)")
   echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
@@ -376,6 +381,21 @@ getfreq() {
   freq="$rigres" 
 }
 
+getband() {
+  declare -A regex_array
+  regex_array=( ['6M']='^50[0-9]*$' ['10M']='^28[0-9]*$' ['12M']='^24[0-9]*$' ['15M']='^21[0-9]*$' ['17M']='^18[0-9]*$' ['20M']='^14[0-9]*$' ['30M']='^10[0-9]*$' ['40M']='^7[0-9]*$' ['80M']='^35[0-9]*$' )
+
+  for k in "${!regex_array[@]}"
+  do
+    if [[ $freq =~ ${regex_array[$k]} ]]
+    then
+      band=$k
+      break
+    fi
+  done
+}
+
+
 # in both modes, enter simply sends what is in the buffer
 enter() {
   debug "${FUNCNAME[0]}"
@@ -399,7 +419,11 @@ escape() {
     kill -9 $pid
     wait $pid 2>/dev/null
   fi
-  cwsend "e"
+  if [[ "$usekeyer"  == "true" ]]
+  then
+    debug "$1 usekeyer=$usekeyer"
+    cwsend "e"
+  fi
 }
 runescape=escape
 sandpescape=escape
@@ -580,6 +604,7 @@ mainloop() {
   debug "my pid $BASHPID"
   if [ ! -f "$logfile" ]; then
     debug "no log found clearing loginfo"
+    debug "logfile: $logfile"
     #remove loginfo file if no current log is found
     rm ./.loginfo
     touch "$logfile"
