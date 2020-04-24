@@ -351,6 +351,7 @@ rigcommand() {
   debug "${FUNCNAME[0]}"
   if [[ "$userig"  == "true" ]]
   then
+    debug "$rigctl -m $rig -r $rigdevice $1"
     local arg1=$(echo "$1" | cut -d' ' -f1)
     rigres=$($rigctl -m $rig -r $rigdevice $1)
     if [[ "$arg1" == "F" ]]
@@ -378,7 +379,8 @@ setfreq() {
 getfreq() {
   debug "${FUNCNAME[0]}"
   rigcommand "f"
-  freq="$rigres" 
+  freq=$(tr -dc '[[:print:]]' <<< "$rigres")
+  freq=$(echo "$freq" | sed 's/[^0-9]*//g') 
 }
 
 getband() {
@@ -577,6 +579,7 @@ drawbuff() {
 drawstatus() {
   debug "${FUNCNAME[0]}"
   status="Mode: $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial"
+  debug "$status"
   tput sc
   clearline $statusline
   tput bold
