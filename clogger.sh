@@ -217,6 +217,10 @@ sendagn() {
 logqso() {
   debug "${FUNCNAME[0]}"
   dxcall=$(echo "$buff" | cut -d' ' -f1)
+  if [ -z "$dxcall" ]
+  then
+    return
+  fi
   decall="$mycall"
   band="20m"
   mode="CW"
@@ -241,6 +245,7 @@ logqso() {
   echo "   <MODE:${#mode}>$mode" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <QSO_DATE:${#date}>$date" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <TIME_ON:${#timeon}>$timeon" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  echo "   <STATION_CALLSIGN:${#station_call}>$station_call" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <OPERATOR:${#decall}>$decall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <RST_SENT:${#sentrs}>$sentrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <RST_RCVD:${#recvrs}>$recvrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
