@@ -38,7 +38,6 @@ initkeys() {
   f7=$(tput kf7)
   f8=$(tput kf8)
   f9=$(tput kf9)
-  f10=$(tput kf10)
   back=$(tput kbs)
   enter=$(tput nel)
   escape=$'\e'
@@ -121,7 +120,8 @@ killcqpid() {
 cwsend() {
   debug "${FUNCNAME[0]}"
   debug "$1 usekeyer=$usekeyer"
-  if [[ ! -z $1 ]] && [[ "$usekeyer" == "true" ]]
+  debug "$mode"
+  if [[ ! -z $1 ]] && [[ "$usekeyer" == "true" ]] && [[ "$mode" == "CW" ]]
   then
     debug "passed cwsend tests"
     lastaction="$1"
@@ -304,7 +304,8 @@ send_tu_e1_logqso_cq() {
   clearbuff
 }
 
-togglemode() {
+# switch between run and s&p
+toggle_run() {
   debug "${FUNCNAME[0]}"
   if [[ "$logmode" == "run" ]]
   then
@@ -312,6 +313,22 @@ togglemode() {
   else
     logmode="run"
   fi
+  clearbuff
+  menu
+}
+
+# cycle through the list of modes available
+cycle_modes() {
+  debug "${FUNCNAME[0]}"
+  max_mode_index=${#modes[@]}
+  max_mode_index=$((max_mode_index-1))
+  if [ "$mode_index" == "$max_mode_index" ]
+  then
+    mode_index=0
+  else
+    mode_index=$((mode_index+1))
+  fi
+  mode="${modes[$mode_index]}"
   clearbuff
   menu
 }
@@ -347,6 +364,7 @@ runcommand() {
     ":qrs") qrs ;;
     ":qrq") qrq ;;
     ":freq") setfreq $(echo "$1" | cut -d' ' -f2) ;;
+    ":lotw") tqsl -p "$certpass" -d -u -a all -x -l "$lotw_station" "$logfile" 2>lotw_results.txt ;;
     *) buff="unknown command $prefix" && drawbuff ;;
     esac
   fi
@@ -514,11 +532,13 @@ menu() {
     func="$logmode$f"
     if [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
     then
+      debug "$func ${!func} is type function"
+      debug "echo -e \"$f: ${!func}\""
       let buffline+=1
       echo -e "$f: ${!func}"
     fi
   done
-  let buffline+=1
+  let buffline+=2
   drawsubmenu
   drawbuff
 }
@@ -583,7 +603,7 @@ drawbuff() {
 
 drawstatus() {
   debug "${FUNCNAME[0]}"
-  status="Mode: $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial"
+  status="Mode: $mode $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial"
   debug "$status"
   tput sc
   clearline $statusline
