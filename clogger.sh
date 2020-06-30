@@ -137,6 +137,12 @@ cwsend() {
   fi
 }
 
+setwpm() {
+  speed="$1"
+  clearbuff
+  drawstatus
+}
+
 qrq() {
   debug "${FUNCNAME[0]}"
   speed="$(($speed+5))"
@@ -372,6 +378,7 @@ runcommand() {
     ":qrq") qrq ;;
     ":freq") setfreq $(echo "$1" | cut -d' ' -f2) ;;
     ":lotw") tqsl -p "$certpass" -d -u -a all -x -l "$lotw_station" "$logfile" 2>lotw_results.txt ;;
+    ":wpm")  setwpm $(echo "$1" | cut -d' ' -f2) ;;
     *) buff="unknown command $prefix" && drawbuff ;;
     esac
   fi
