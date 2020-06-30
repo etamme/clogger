@@ -9,4 +9,4 @@ It features:
 - Automatic DUPE checking
 - LOTW compatible ADIF output
 
-![demo](https://i.imgur.com/2Flu8Ay.gif)
+![demo](https://i.imgur.com/E5HjEoR.gif)
