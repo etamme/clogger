@@ -220,6 +220,30 @@ sendagn() {
   cwsend "$myagn"
 }
 
+parse_rst() {
+
+    # extract RST based on mode
+    if [ "$mode" == "CW" ]
+    then
+      rsts=$(echo "$1" | grep -oP '(\d{3})' | tr "\n" " ")
+    elif [ "$mode" == "FT8" ]
+    then
+      rsts=$(echo "$1" | grep -oP '(\-|\+)\d{1,2}' | tr "\n" " ")
+    else
+      rsts=$(echo "$1" | grep -oP '(\d{2})' | tr "\n" " ")
+    fi
+
+    # assign RST's based on whether you were running, or s&p
+    if [ "logmode" == "run" ]
+    then
+      sentrs=$(echo "$1" | cut -d' ' -f2)
+      recvrs=$(echo "$1" | cut -d' ' -f3)
+    else
+      sentrs=$(echo "$1" | cut -d' ' -f3)
+      recvrs=$(echo "$1" | cut -d' ' -f2)
+    fi
+}
+
 logqso() {
   debug "${FUNCNAME[0]}"
   dxcall=$(echo "$buff" | cut -d' ' -f1)
@@ -232,10 +256,16 @@ logqso() {
   mode="CW"
   date=$(date -u +"%Y%m%d")
   timeon=$(date -u +%H%M)
-  sentrs="599"
-  recvrs="599"
-  # strip non-printable chars from buffer when setting comments
-  comments=$(echo "$buff" | cut -d' ' -f2- | tr -cd "[:print:]")
+  if [ "$parserst" == "true" ]
+  then
+    parse_rst "$buff"
+    comments=$(echo "$buff" | cut -d' ' -f4- | tr -cd "[:print:]")
+  else
+    sentrs="599"
+    recvrs="599"
+    # strip non-printable chars from buffer when setting comments
+    comments=$(echo "$buff" | cut -d' ' -f2- | tr -cd "[:print:]")
+  fi
   if [[ ! -z "$contestname" ]]
   then
     comments="$comments - $contestname"
