@@ -381,7 +381,17 @@ checkdupe() {
   debug "${FUNCNAME[0]}"
   if fgrep -qiF "$1" "$logfile" 
   then
-    echo "true"
+    worked_bands=$(grep -iA3 "$1" "$logfile" | grep "BAND" | cut -d'>' -f2)
+    getfreq
+    khz="$freq"
+    getband "$freq"
+    worked=$(echo "$worked_bands" | grep "$band")
+    if [ -z $worked ]
+    then
+      echo "false"
+    else
+      echo "true"
+    fi
   else
     echo "false"
   fi
