@@ -116,6 +116,12 @@ killcqpid() {
   fi
 }
 
+# open the key
+openkey() {
+  debug "${FUNCNAME[0]}"
+  $keyer -o -t "off"
+}
+
 # arg1: text arg2: async/sync (default to async)
 cwsend() {
   debug "${FUNCNAME[0]}"
@@ -506,7 +512,7 @@ escape() {
   if [[ "$usekeyer"  == "true" ]]
   then
     debug "$1 usekeyer=$usekeyer"
-    cwsend "e"
+    openkey
   fi
 }
 runescape=escape
@@ -591,8 +597,6 @@ menu() {
     func="$logmode$f"
     if [ -n "$(type -t ${!func})" ] && [ "$(type -t ${!func})" = function ]
     then
-      debug "$func ${!func} is type function"
-      debug "echo -e \"$f: ${!func}\""
       let buffline+=1
       echo -e "$f: ${!func}"
     fi
@@ -663,7 +667,6 @@ drawbuff() {
 drawstatus() {
   debug "${FUNCNAME[0]}"
   status="Mode: $mode $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial"
-  debug "$status"
   tput sc
   clearline $statusline
   tput bold
