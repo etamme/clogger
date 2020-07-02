@@ -111,7 +111,7 @@ killcqpid() {
   then
     debug "kill -9 $cqpid"
     kill -9 $cqpid
-    wait $pid 2>/dev/null
+    wait $pid
     cqpid=""
   fi
 }
@@ -501,7 +501,7 @@ escape() {
   if [[ ! -z $pid ]]
   then
     kill -9 $pid
-    wait $pid 2>/dev/null
+    wait $pid
   fi
   if [[ "$usekeyer"  == "true" ]]
   then
@@ -687,6 +687,8 @@ drawsubmenu() {
 #
 
 mainloop() {
+  #redirect all stderr to dev null - this supressis killed pid messages etc.
+  exec 2>/dev/null
   debug "${FUNCNAME[0]}"
   debug "my pid $BASHPID"
   if [ ! -f "$logfile" ]; then
