@@ -242,11 +242,11 @@ parse_rst() {
     # assign RST's based on whether you were running, or s&p
     if [ "logmode" == "run" ]
     then
-      sentrs=$(echo "$1" | cut -d' ' -f2)
-      recvrs=$(echo "$1" | cut -d' ' -f3)
-    else
       sentrs=$(echo "$1" | cut -d' ' -f3)
       recvrs=$(echo "$1" | cut -d' ' -f2)
+    else
+      sentrs=$(echo "$1" | cut -d' ' -f2)
+      recvrs=$(echo "$1" | cut -d' ' -f3)
     fi
 }
 
@@ -271,6 +271,12 @@ logqso() {
     recvrs="599"
     # strip non-printable chars from buffer when setting comments
     comments=$(echo "$buff" | cut -d' ' -f2- | tr -cd "[:print:]")
+  fi
+  if [[ "$comments" == *"skcc"* ]]; then
+        skcc=$(awk -F 'skcc' '{print $2}' <<< "$comments")
+	skcc=$(echo "$skcc" | tr -d ' ')
+  else
+    skcc=""
   fi
   if [[ ! -z "$contestname" ]]
   then
@@ -299,6 +305,11 @@ logqso() {
   echo "   <RST_SENT:${#sentrs}>$sentrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <RST_RCVD:${#recvrs}>$recvrs" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <COMMENT:${#comments}>$comments" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  if [ ! -z "$skcc" ] && [ ! -z "$myskcc" ]
+  then
+      echo "   <SKCC:${#skcc}>$skcc" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+      echo "   <MY_SKCC:${#myskcc}>$myskcc" | tr '[:lower:]' '[:upper:]' >> "$logfile"
+  fi
   echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   qsocount="$(($qsocount+1))"
   serial="$(($serial+1))"
@@ -390,9 +401,6 @@ checkdupe() {
     if [ "$userig" == "true" ]
     then
       worked_bands=$(grep -iA3 "$1" "$logfile" | grep "BAND" | cut -d'>' -f2)
-      getfreq
-      khz="$freq"
-      getband "$freq"
       worked=$(echo "$worked_bands" | grep "$band")
       if [ -z $worked ]
       then
@@ -400,9 +408,9 @@ checkdupe() {
       else
         echo "true"
       fi
-    else
-      echo "true"
-    fi
+  else
+    echo "true"
+  fi
   else
     echo "false"
   fi
@@ -442,6 +450,7 @@ rigcommand() {
     debug "$rigctl -m $rig -r $rigdevice $1"
     local arg1=$(echo "$1" | cut -d' ' -f1)
     rigres=$($rigctl -m $rig -r $rigdevice $1)
+    openkey
     if [[ "$arg1" == "F" ]]
     then
       freq="$rigres"
@@ -705,7 +714,14 @@ mainloop() {
     qsocount=0
     serial=1
   fi
-  getfreq
+  band=""
+  freq=""
+  if [ "$userig" == "true" ]
+  then
+    getfreq
+  fi
+  khz="$freq"
+  getband "$freq"
   buff=""
   subbuff=""
   lastaction=""
