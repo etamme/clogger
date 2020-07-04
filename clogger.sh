@@ -721,8 +721,6 @@ mainloop() {
     echo "<ADIF_VER:4>1.00" >> "$logfile"
     echo "<EOH>" >> "$logfile"
   fi
-  qsocount=0
-  serial=1
   band=""
   freq=""
   if [ "$userig" == "true" ]
@@ -752,11 +750,19 @@ mainloop() {
 
 # we MUST initialize our keycodes
 initkeys
+qsocount=0
+serial=1
 #set serial and log count based on loginfo
 if test -f "./.loginfo"; then
   debug "getting qso count and serial from loginfo"
   qsocount=$(grep QSO .loginfo | cut -d' ' -f2)
   serial=$(grep SERIAL .loginfo | cut -d' ' -f2)
+fi
+# if we had a bogus loginfo, reset qso and serial counts
+if [ "$qsocount" == "" ]
+then
+ qsocount=0
+ serial=1
 fi
 # call our main loop
 mainloop
