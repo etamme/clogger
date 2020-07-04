@@ -283,6 +283,12 @@ logqso() {
     comments="$comments - $contestname"
   fi
   debug "$comments"
+
+  if [ ! -z "$freq" ]
+  then
+    mhz=$(bc <<< "scale = 4; ($khz/1000000)")
+  fi
+
   echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <FREQ:${#mhz}>$mhz" | tr '[:lower:]' '[:upper:]' >> "$logfile"
