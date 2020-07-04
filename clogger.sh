@@ -196,10 +196,10 @@ update_exchange(){
   serial_length=${#serial}
   if [ "$serial_length"  == 1 ]
   then
-    temp_serial="00$serial"
+    temp_serial="TT$serial"
   elif [ "$serial_length" == 2 ]
   then
-    temp_serial="0$serial"
+    temp_serial="T$serial"
   else
     temp_serial=$serial
   fi
@@ -714,9 +714,9 @@ mainloop() {
     touch "$logfile"
     echo "<ADIF_VER:4>1.00" >> "$logfile"
     echo "<EOH>" >> "$logfile"
-    qsocount=0
-    serial=1
   fi
+  qsocount=0
+  serial=1
   band=""
   freq=""
   if [ "$userig" == "true" ]
