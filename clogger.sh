@@ -93,6 +93,7 @@ execfunc() {
     # when running the sendcq function, run it in background and capture the pid
     if [[ "${!func}" == "sendcq" ]]
     then
+      setband
       ${!func} &
       cqpid=$!
       debug "sendcq cqpid: $cqpid"
@@ -214,6 +215,7 @@ sendexchange() {
 }
 
 sendmycall() {
+  setband
   debug "${FUNCNAME[0]}"
   cwsend "$mycall"
 }
@@ -258,8 +260,6 @@ logqso() {
     return
   fi
   decall="$mycall"
-  band="20m"
-  mode="CW"
   date=$(date -u +"%Y%m%d")
   timeon=$(date -u +%H%M)
   if [ "$parserst" == "true" ]
@@ -283,17 +283,6 @@ logqso() {
     comments="$comments - $contestname"
   fi
   debug "$comments"
-  if [ "$userig" == "true" ]
-  then
-    getfreq
-    khz="$freq"
-    getband "$freq"
-    mhz=$(bc <<< "scale = 4; ($khz/1000000)")
-  else
-    khz=""
-    mhz=""
-    band=""
-  fi
   echo "<CALL:${#dxcall}>$dxcall" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <BAND:${#band}>$band" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   echo "   <FREQ:${#mhz}>$mhz" | tr '[:lower:]' '[:upper:]' >> "$logfile"
@@ -393,6 +382,19 @@ cycle_modes() {
   menu
 }
 
+setband() {
+  if [ "$userig" == "true" ]
+  then
+    # only lookup frequency and band information once per call
+    if [ "$checked_band_for_current_call" == "false" ]
+    then 
+      getfreq
+      khz="$freq"
+      getband "$freq"
+    fi
+  fi
+}
+
 # arg1 is call to check
 checkdupe() {
   debug "${FUNCNAME[0]}"
@@ -408,9 +410,9 @@ checkdupe() {
       else
         echo "true"
       fi
-  else
-    echo "true"
-  fi
+    else
+      echo "true"
+    fi
   else
     echo "false"
   fi
@@ -447,9 +449,9 @@ rigcommand() {
   debug "${FUNCNAME[0]}"
   if [[ "$userig"  == "true" ]]
   then
-    debug "$rigctl -m $rig -r $rigdevice $1"
+    debug "$rigctl $rigoptions -m $rig -r $rigdevice $1"
     local arg1=$(echo "$1" | cut -d' ' -f1)
-    rigres=$($rigctl -m $rig -r $rigdevice $1)
+    rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $1)
     openkey
     if [[ "$arg1" == "F" ]]
     then
@@ -562,6 +564,7 @@ sandpspace=space
 # remove a char from the buffer
 backspace() {
   debug "${FUNCNAME[0]}"
+
   if [[ ! -z "$buff" ]]
   then
     buff="${buff:0:-1}"
