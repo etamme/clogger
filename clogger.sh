@@ -252,6 +252,15 @@ parse_rst() {
     fi
 }
 
+lotw_upload() {
+  tqsl -p "$certpass" -d -u -a all -x -l "$lotw_station" "$logfile" 2>lotw_results.txt
+  lotw_result=$(grep "Final Status:" lotw_results.txt)
+  subbuff="$lotw_result"
+  buff=""
+  drawbuff
+  drawsubmenu
+}
+
 logqso() {
   debug "${FUNCNAME[0]}"
   dxcall=$(echo "$buff" | cut -d' ' -f1)
@@ -444,7 +453,7 @@ runcommand() {
     ":qrs") qrs ;;
     ":qrq") qrq ;;
     ":freq") setfreq $(echo "$1" | cut -d' ' -f2) ;;
-    ":lotw") tqsl -p "$certpass" -d -u -a all -x -l "$lotw_station" "$logfile" 2>lotw_results.txt ;;
+    ":lotw") lotw_upload ;;
     ":wpm")  setwpm $(echo "$1" | cut -d' ' -f2) ;;
     *) buff="unknown command $prefix" && drawbuff ;;
     esac
