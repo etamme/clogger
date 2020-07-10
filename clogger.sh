@@ -4,6 +4,7 @@
 #source clogger.cfg
 source clogger.cfg
 source "$contest"
+clogger_version="1"
 
 # turn on or off verbose debug logs
 debugon="true"
@@ -753,6 +754,12 @@ mainloop() {
   menuline=2
   cqpid=""
   temp_exchange="$myexchange"
+  if [ "$config_version" != "$clogger_version" ]
+  then
+    subbuff="WARNING - Mismatched configuration version"
+    drawsubmenu
+    drawbuff
+  fi
   menu
   while true
   do
@@ -762,6 +769,7 @@ mainloop() {
     execfunc "$mappedkey" "$logmode"
   done
 }
+
 
 # we MUST initialize our keycodes
 initkeys
