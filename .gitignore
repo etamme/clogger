@@ -1,6 +1,6 @@
 keyer.py
 rigctl
 *.adi
-#user.cfg
+user.cfg
 logs/*
 callfiles/*
