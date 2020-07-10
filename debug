@@ -1,0 +1,381 @@
+
+initkeys
+mainloop
+my pid 35098
+no log found clearing loginfo
+logfile: ./logs/2020-default.adi
+getfreq
+rigcommand
+./rigctl --set-conf=dtr_state=OFF --set-conf=rts_state=OFF -m 373 -r /dev/ttyUSB0 f
+openkey
+menu
+clearscreen
+drawstatus
+clearline
+drawlastaction
+clearline
+drawsubmenu
+drawbuff
+clearline
+readkey
+rawkey: 't'
+mapkey
+killcqpid
+execfunc
+runt
+appendbuff t
+appendbuff
+readkey
+rawkey: 'e'
+mapkey
+killcqpid
+execfunc
+rune
+appendbuff e
+appendbuff
+readkey
+rawkey: 's'
+mapkey
+killcqpid
+execfunc
+runs
+appendbuff s
+appendbuff
+checkdupe
+readkey
+rawkey: 't'
+mapkey
+killcqpid
+execfunc
+runt
+appendbuff t
+appendbuff
+checkdupe
+readkey
+rawkey: 'i'
+mapkey
+killcqpid
+execfunc
+runi
+appendbuff i
+appendbuff
+checkdupe
+readkey
+rawkey: 'g'
+mapkey
+killcqpid
+execfunc
+rung
+appendbuff g
+appendbuff
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runenter
+enter
+sendbuff
+cwsend
+testig usekeyer=true
+CW
+passed cwsend tests
+drawlastaction
+clearline
+python keyer.py -w 30 -d /dev/ttyUSB0 -t "testig" &
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runescape
+escape
+ usekeyer=true
+openkey
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: 'd'
+mapkey
+killcqpid
+execfunc
+rund
+appendbuff d
+appendbuff
+readkey
+rawkey: 'o'
+mapkey
+killcqpid
+execfunc
+runo
+appendbuff o
+appendbuff
+readkey
+rawkey: 'd'
+mapkey
+killcqpid
+execfunc
+rund
+appendbuff d
+appendbuff
+checkdupe
+readkey
+rawkey: 'o'
+mapkey
+killcqpid
+execfunc
+runo
+appendbuff o
+appendbuff
+checkdupe
+readkey
+rawkey: 'd'
+mapkey
+killcqpid
+execfunc
+rund
+appendbuff d
+appendbuff
+checkdupe
+readkey
+rawkey: 'o'
+mapkey
+killcqpid
+execfunc
+runo
+appendbuff o
+appendbuff
+checkdupe
+readkey
+rawkey: 'd'
+mapkey
+killcqpid
+execfunc
+rund
+appendbuff d
+appendbuff
+checkdupe
+readkey
+rawkey: 'o'
+mapkey
+killcqpid
+execfunc
+runo
+appendbuff o
+appendbuff
+checkdupe
+readkey
+rawkey: 'd'
+mapkey
+killcqpid
+execfunc
+rund
+appendbuff d
+appendbuff
+checkdupe
+readkey
+rawkey: 'o'
+mapkey
+killcqpid
+execfunc
+runo
+appendbuff o
+appendbuff
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runenter
+enter
+sendbuff
+cwsend
+dododododo usekeyer=true
+CW
+passed cwsend tests
+drawlastaction
+clearline
+python keyer.py -w 30 -d /dev/ttyUSB0 -t "dododododo" &
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runescape
+escape
+ usekeyer=true
+openkey
+readkey
+rawkey: '[15~'
+mapkey
+killcqpid
+execfunc
+runf5
+qrs
+drawstatus
+clearline
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+checkdupe
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
+rawkey: ''
+mapkey
+killcqpid
+execfunc
+runback
+backspace
+readkey
