@@ -12,9 +12,8 @@ It features:
 To Use:
 - Clone repo and [CWkeyer](https://github.com/etamme/cwkeyer)
 - Symlink keyer.py from cwkeyer into the clogger root directory
-- Configure via user.cfg
+- Configure via clogger.cfg
 - Configure applicable contest files
 - Update [Call History Files](https://n1mmwp.hamdocs.com/mmfiles/categories/callhistory/) as necessary
-- Set correct contest file in clogger.cfg
 
 ![demo](https://i.imgur.com/E5HjEoR.gif)
