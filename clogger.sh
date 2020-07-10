@@ -264,6 +264,12 @@ lotw_upload() {
 logqso() {
   debug "${FUNCNAME[0]}"
   dxcall=$(echo "$buff" | cut -d' ' -f1)
+
+  if [ ! -d "logs" ]
+  then
+    mkdir logs
+  fi
+
   if [ -z "$dxcall" ]
   then
     return
