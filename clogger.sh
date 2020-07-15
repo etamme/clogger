@@ -324,8 +324,8 @@ logqso() {
   echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   qsocount="$(($qsocount+1))"
   serial="$(($serial+1))"
-  echo "QSO $qsocount" > ./.loginfo
-  echo "SERIAL $serial" >> ./.loginfo
+  echo "QSO $qsocount" > "./.loginfo-$contest"
+  echo "SERIAL $serial" >> "./.loginfo-$contest"
   dupe="false"
   lastaction="Logged $buff"
   drawlastaction
@@ -732,7 +732,7 @@ mainloop() {
     debug "no log found clearing loginfo"
     debug "logfile: $logfile"
     #remove loginfo file if no current log is found
-    rm ./.loginfo
+    rm "./.loginfo-$contest"
     touch "$logfile"
     echo "<ADIF_VER:4>1.00" >> "$logfile"
     echo "<EOH>" >> "$logfile"
@@ -776,10 +776,10 @@ initkeys
 qsocount=0
 serial=1
 #set serial and log count based on loginfo
-if test -f "./.loginfo"; then
+if test -f "./.loginfo-$contest"; then
   debug "getting qso count and serial from loginfo"
-  qsocount=$(grep QSO .loginfo | cut -d' ' -f2)
-  serial=$(grep SERIAL .loginfo | cut -d' ' -f2)
+  qsocount=$(grep QSO ".loginfo-$contest" | cut -d' ' -f2)
+  serial=$(grep SERIAL ".loginfo-$contest" | cut -d' ' -f2)
 fi
 # if we had a bogus loginfo, reset qso and serial counts
 if [ "$qsocount" == "" ]
