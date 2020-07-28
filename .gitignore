@@ -3,4 +3,5 @@ rigctl
 *.adi
 clogger.cfg
 logs/*
+debug
 callfiles/*
