@@ -785,10 +785,10 @@ initkeys
 qsocount=0
 serial=1
 #set serial and log count based on loginfo
-if test -f "./.loginfo-$contest"; then
+if test -f "./.loginfo-$contestname"; then
   debug "getting qso count and serial from loginfo"
-  qsocount=$(grep QSO ".loginfo-$contest" | cut -d' ' -f2)
-  serial=$(grep SERIAL ".loginfo-$contest" | cut -d' ' -f2)
+  qsocount=$(grep QSO ".loginfo-$contestname" | cut -d' ' -f2)
+  serial=$(grep SERIAL ".loginfo-$contestname" | cut -d' ' -f2)
 fi
 # if we had a bogus loginfo, reset qso and serial counts
 if [ "$qsocount" == "" ]
