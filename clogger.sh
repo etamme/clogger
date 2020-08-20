@@ -324,8 +324,8 @@ logqso() {
   echo "<EOR>" | tr '[:lower:]' '[:upper:]' >> "$logfile"
   qsocount="$(($qsocount+1))"
   serial="$(($serial+1))"
-  echo "QSO $qsocount" > "./.loginfo-$contest"
-  echo "SERIAL $serial" >> "./.loginfo-$contest"
+  echo "QSO $qsocount" > "./.loginfo-$contestname"
+  echo "SERIAL $serial" >> "./.loginfo-$contestname"
   dupe="false"
   lastaction="Logged $buff"
   drawlastaction
@@ -363,6 +363,13 @@ send_serial() {
 send_tu_logqso_cq() {
   debug "${FUNCNAME[0]}"
   cwsend "TU $mycq"
+  logqso
+  clearbuff
+}
+
+send_tu_logqso_mycall() {
+  debug "${FUNCNAME[0]}"
+  cwsend "TU $mycall"
   logqso
   clearbuff
 }
@@ -728,11 +735,13 @@ mainloop() {
   exec 2>/dev/null
   debug "${FUNCNAME[0]}"
   debug "my pid $BASHPID"
+  debug "logfile: $logfile"
   if [ ! -f "$logfile" ]; then
     debug "no log found clearing loginfo"
-    debug "logfile: $logfile"
     #remove loginfo file if no current log is found
+    debug "removing ./.loginfo-$contestname"
     rm "./.loginfo-$contest"
+    debug "creating logfile: $logfile"
     touch "$logfile"
     echo "<ADIF_VER:4>1.00" >> "$logfile"
     echo "<EOH>" >> "$logfile"
