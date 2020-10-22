@@ -565,14 +565,20 @@ tab() {
   local callbuff=$(echo "$buff" | tr " " "$delimeter")
   if [[ $(grep -i "$callbuff" "$callfile" | wc -l)  -eq 1 ]]
   then
-    local buffexchange=$(grep -i "^$callbuff" "$callfile" | cut -d"$delimeter" -f2- | tr "$delimeter" ' ')
+    # make certain to trim spaces, and any non-printable chars from autocompleted exchange
+    local buffexchange=$(grep -i "^$callbuff" "$callfile" | cut -d"$delimeter" -f2- | tr "$delimeter" ' ' | sed -e 's/^[[:space:]]*//' | tr -cd "[:print:]")
     echo "grep -i \"$callbuff\" \"$callfile\" | cut -d\"$delimeter\" -f1)" >> debug
     local call=$(grep -i "$callbuff" "$callfile" | cut -d"$delimeter" -f1)
     buff="$call $buffexchange"
     subbuff=""
     echo "single: $callbuff" >> debug
-    drawbuff
     drawsubmenu
+    drawbuff
+    # if the contest file wants a space after for copying serial etc. append it
+    if [[ "$appendspace" == "true" ]]
+    then
+      appendbuff " "
+    fi
   else
     subbuff=$(grep -i "^$callbuff" "$callfile" | cut -d"$delimeter" -f1 | tr '\r\n' ' ')
     echo "mult: $callbuff" >> debug
@@ -615,6 +621,7 @@ backspace() {
     echo -n ">$buff"
     tput sgr0
   fi
+  setbuffcursor
 }
 runback="backspace"
 sandpback="backspace"
@@ -684,6 +691,7 @@ appendbuff() {
   tput cup $buffline 0
   echo -n ">$buff"
   tput sgr0
+  setbuffcursor
 }
 
 clearbuff() {
@@ -703,11 +711,18 @@ drawbuff() {
   tput cup $buffline 0
   echo -n ">$buff"
   tput sgr0
+  setbuffcursor
 }
 
 drawstatus() {
   debug "${FUNCNAME[0]}"
-  status="Mode: $mode $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial"
+  if [[ $(type -t get_mults) == "function" ]]
+  then
+    get_mults
+    status="Mode: $mode $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial Mults: $mults"
+  else
+    status="Mode: $mode $logmode  Speed: $speed Freq: $freq Call: $mycall QSO: $qsocount Serial: $serial"
+  fi
   tput sc
   clearline $statusline
   tput bold
@@ -726,6 +741,10 @@ drawsubmenu() {
   tput rc
 }
 
+setbuffcursor() {
+  debug "${FUNCNAME[0]}"
+  tput cup $buffline $((${#buff}+1))
+}
 #
 # ------------ main loop and script init ---------------
 #
