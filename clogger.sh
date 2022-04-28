@@ -65,7 +65,7 @@ mapkey() {
     "$escape") echo "escape";;
     "$tab") echo "tab";;
     " ") echo "space";;
-    *) 
+    *)
        if [[ "$1" =~ ^[[:alnum:]]*$ ]] || [[ "$1" =~ ^[[:punct:]]*$ ]]
        then
          echo "$1"
@@ -433,7 +433,7 @@ setband() {
   then
     # only lookup frequency and band information once per call
     if [ "$checked_band_for_current_call" == "false" ]
-    then 
+    then
       getfreq
       khz="$freq"
       getband "$freq"
@@ -444,7 +444,7 @@ setband() {
 # arg1 is call to check
 checkdupe() {
   debug "${FUNCNAME[0]}"
-  if fgrep -qiF "$1" "$logfile" 
+  if fgrep -qiF "$1" "$logfile"
   then
     if [ "$userig" == "true" ]
     then
