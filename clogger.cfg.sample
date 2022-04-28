@@ -25,7 +25,10 @@ rigdevice="/dev/ttyUSB0"
 
 #CW Keyer
 usekeyer="true"
-#Change cwdevice if you have an external keyer. Otherwise, match radio 
+#Change kewwithhamlib to true to key using hamlib rather than cwkeyer.sh for
+#rigs that support it (e.g., the IC-7300).
+keywithhamlib=false
+#Change cwdevice if you have an external keyer. Otherwise, match radio
 cwdevice="/dev/ttyUSB0"
 
 #

@@ -134,19 +134,36 @@ cwsend() {
     debug "passed cwsend tests"
     lastaction="$1"
     drawlastaction
-    if [[ "$2" == "sync" ]]
+    if [[ "$keywithhamlib" != "true"]]
     then
-      debug "$keyer -w $speed -d $cwdevice -t \"$1\""
-      $keyer -w $speed -d $cwdevice -t "$1"
+      debug "keying with cwkeyer"
+      if [[ "$2" == "sync" ]]
+      then
+        debug "$keyer -w $speed -d $cwdevice -t \"$1\""
+        $keyer -w $speed -d $cwdevice -t "$1"
+      else
+        debug "$keyer -w $speed -d $cwdevice -t \"$1\" &"
+        $keyer -w $speed -d $cwdevice -t "$1" &
+      fi
     else
-      debug "$keyer -w $speed -d $cwdevice -t \"$1\" &"
-      $keyer -w $speed -d $cwdevice -t "$1" &
-    fi
+      debug "keying with hamlib"
+      if [[ "$2" == "sync" ]]
+      then
+        debug "$rigctl $rigoptions -m $rig -r $rigdevice  b \'$1\'"
+        rigcommand "b '$1'"
+      else
+        debug "$rigctl $rigoptions -m $rig -r $rigdevice  b \'$1\' &"
+        rigcommand "b '$1'" &
   fi
 }
 
 setwpm() {
   speed="$1"
+  if [[ "$keywithhamlib" == "true"]]
+  then
+    debug "$rigctl $rigoptions -m $rig -r $rigdevice L KEYSPD \'$1\' &"
+    rigcommand "L KEYSPD '$1'" &
+  fi
   clearbuff
   drawstatus
 }
@@ -154,12 +171,12 @@ setwpm() {
 qrq() {
   debug "${FUNCNAME[0]}"
   speed="$(($speed+5))"
-  drawstatus
+  setwpm(speed)
 }
 qrs() {
   debug "${FUNCNAME[0]}"
   speed="$(($speed-5))"
-  drawstatus
+  setwpm(speed)
 }
 runqrq=qrq
 sandpqrq=qrq
@@ -508,7 +525,15 @@ getfreq() {
   debug "${FUNCNAME[0]}"
   rigcommand "f"
   freq=$(tr -dc '[[:print:]]' <<< "$rigres")
-  freq=$(echo "$freq" | sed 's/[^0-9]*//g') 
+  freq=$(echo "$freq" | sed 's/[^0-9]*//g')
+}
+
+getkeyerspeed() {
+  if [[ "$keywithhamlib" == "true"]]
+  then
+    debug "$rigctl $rigoptions -m $rig -r $rigdevice l KEYSPD"
+    speed=$(rigcommand "l KEYSPD")
+  fi
 }
 
 getband() {
@@ -770,6 +795,7 @@ mainloop() {
   if [ "$userig" == "true" ]
   then
     getfreq
+    getkeyerspeed
   fi
   khz="$freq"
   getband "$freq"
@@ -785,6 +811,12 @@ mainloop() {
   if [ "$config_version" != "$clogger_version" ]
   then
     subbuff="WARNING - Mismatched configuration version"
+    drawsubmenu
+    drawbuff
+  fi
+  if [ "$userig" == "false" & "$keywithrig" == "true"]
+  then
+    subbuff="WARNING - Mismatched userig and keywithrig configuration"
     drawsubmenu
     drawbuff
   fi
