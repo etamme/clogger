@@ -154,6 +154,8 @@ cwsend() {
       else
         debug "$rigctl $rigoptions -m $rig -r $rigdevice  b \'$1\' &"
         rigcommand "b '$1'" &
+      fi
+    fi
   fi
 }
 
