@@ -173,12 +173,12 @@ setwpm() {
 qrq() {
   debug "${FUNCNAME[0]}"
   speed="$(($speed+5))"
-  setwpm(speed)
+  setwpm $speed
 }
 qrs() {
   debug "${FUNCNAME[0]}"
   speed="$(($speed-5))"
-  setwpm(speed)
+  setwpm $speed
 }
 runqrq=qrq
 sandpqrq=qrq
