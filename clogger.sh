@@ -134,7 +134,7 @@ cwsend() {
     debug "passed cwsend tests"
     lastaction="$1"
     drawlastaction
-    if [[ "$keywithhamlib" != "true"]]
+    if [[ "$keywithhamlib" != "true" ]]
     then
       debug "keying with cwkeyer"
       if [[ "$2" == "sync" ]]
@@ -161,7 +161,7 @@ cwsend() {
 
 setwpm() {
   speed="$1"
-  if [[ "$keywithhamlib" == "true"]]
+  if [[ "$keywithhamlib" == "true" ]]
   then
     debug "$rigctl $rigoptions -m $rig -r $rigdevice L KEYSPD \'$1\' &"
     rigcommand "L KEYSPD '$1'" &
@@ -531,7 +531,7 @@ getfreq() {
 }
 
 getkeyerspeed() {
-  if [[ "$keywithhamlib" == "true"]]
+  if [[ "$keywithhamlib" == "true" ]]
   then
     debug "$rigctl $rigoptions -m $rig -r $rigdevice l KEYSPD"
     speed=$(rigcommand "l KEYSPD")
@@ -816,7 +816,7 @@ mainloop() {
     drawsubmenu
     drawbuff
   fi
-  if [ "$userig" == "false" & "$keywithrig" == "true"]
+  if [ "$userig" == "false" & "$keywithrig" == "true " ]
   then
     subbuff="WARNING - Mismatched userig and keywithrig configuration"
     drawsubmenu
