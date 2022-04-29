@@ -149,11 +149,9 @@ cwsend() {
       debug "keying with hamlib"
       if [[ "$2" == "sync" ]]
       then
-        debug "$rigctl $rigoptions -m $rig -r $rigdevice  b \'$1\'"
-        rigcommand "b '$1'"
+        rigcommand "b $1"
       else
-        debug "$rigctl $rigoptions -m $rig -r $rigdevice  b \'$1\' &"
-        rigcommand "b '$1'" &
+        rigcommand "b $1" &
       fi
     fi
   fi
@@ -497,9 +495,20 @@ rigcommand() {
   debug "${FUNCNAME[0]}"
   if [[ "$userig"  == "true" ]]
   then
-    debug "$rigctl $rigoptions -m $rig -r $rigdevice $1"
     local arg1=$(echo "$1" | cut -d' ' -f1)
-    rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $1)
+    #CW string might have spaces, and quotes don't pass correctly
+    #so they are treated specially
+    if [[ "$arg1" == "b" ]] 
+    then
+      debug "Sending CW..."
+      local send1=$(echo "$1" | sed 's/^b\ //g' | sed "s/'//g")
+      debug "$rigctl $rigoptions -m $rig -r $rigdevice b '$send1'"
+      rigres=$($rigctl $rigoptions -m $rig -r $rigdevice b "$send1")
+    else
+      local send1=$(echo "$1" | sed "s/'//g")
+      debug "$rigctl $rigoptions -m $rig -r $rigdevice $send1"
+      rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $send1)
+    fi
     openkey
     if [[ "$arg1" == "F" ]]
     then
