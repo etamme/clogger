@@ -161,8 +161,8 @@ setwpm() {
   speed="$1"
   if [[ "$keywithhamlib" == "true" ]]
   then
-    debug "$rigctl $rigoptions -m $rig -r $rigdevice L KEYSPD \'$1\' &"
-    rigcommand "L KEYSPD '$1'" &
+    debug "$rigctl $rigoptions -m $rig -r $rigdevice L KEYSPD $1"
+    rigcommand "L KEYSPD $1" 
   fi
   clearbuff
   drawstatus
@@ -515,6 +515,11 @@ rigcommand() {
       freq="$rigres"
       drawstatus
     fi
+    if [[ "$arg1" == "l" ]]
+    then
+      speed="$rigres"
+      drawstatus
+    fi
   fi
 }
 # arg1 is serial
@@ -542,8 +547,8 @@ getfreq() {
 getkeyerspeed() {
   if [[ "$keywithhamlib" == "true" ]]
   then
-    debug "$rigctl $rigoptions -m $rig -r $rigdevice l KEYSPD"
-    speed=$(rigcommand "l KEYSPD")
+    rigcommand 'l KEYSPD'
+    debug "keyer is now $speed wpm"
   fi
 }
 
