@@ -509,7 +509,10 @@ rigcommand() {
       debug "$rigctl $rigoptions -m $rig -r $rigdevice $send1"
       rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $send1)
     fi
-    openkey
+    if [[ "$keywithhamlib" != "true" ]]
+    then
+      openkey
+    fi
     if [[ "$arg1" == "F" ]]
     then
       freq="$rigres"
