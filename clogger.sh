@@ -588,7 +588,12 @@ escape() {
   if [[ "$usekeyer"  == "true" ]]
   then
     debug "$1 usekeyer=$usekeyer"
-    openkey
+    if [[ "$keywithhamlib" != "true" ]]
+    then
+      openkey
+    else
+      rigcommand \stop_morse
+    fi
   fi
 }
 runescape=escape
