@@ -150,8 +150,9 @@ cwsend() {
       if [[ "$2" == "sync" ]]
       then
         rigcommand "b $1"
+        rigcommand \wait_morse
       else
-        rigcommand "b $1" &
+        rigcommand "b $1"
       fi
     fi
   fi
@@ -202,11 +203,12 @@ sendbuff() {
 }
 
 sendcq() {
-  debug "${FUNCNAME[0]}"
+ debug "${FUNCNAME[0]}"
  while true
  do
    cwsend "$mycq" "sync"
    sleep $cqdelay
+   debug "Sleeping $cqdelay seconds between CQ calls"
  done
 }
 
