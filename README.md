@@ -37,9 +37,10 @@ Hamlib is used to read frequency in CLogger, but it can also key the transmitter
 ## WFView
 Example tested and working config connecting to WFView's pseudo TTY device with an IC-7300:
 
+```
  rig="3073"
  rigdevice="/home/pi/rig-pty1"
  keywithhamlib="true"
  rigoptions=""
  rigctl="/usr/local/bin/rigctl" #Compiled hamlib v4.1
-
+```
