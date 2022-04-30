@@ -21,12 +21,12 @@ To Use:
 
 ## cwkeyer and hamlib keyer
 cwkeyer works in a similar way to cwdaemon; by keying the transmitter via the RTS or DTR pins of the computer serial port. It does the timing of the cw characters in computer software.
-- Can work with any rig using a simple transistor and capacitor circuit connected to key port
+- Can work with any rig using a simple transistor and capacitor circuit connected to key port of the transceiver
 - Can also use the built-in serial ports of many rigs
 
-Hamlib is used to read frequency in CLogger, but it can also key the transmitter. It does this by sending text over CI-V and the radio's built-in keyer does the actual timing.
+Hamlib is used to read frequency in CLogger, but it can also key the transmitter. It does this by sending text over the CAT protocol to the radio's built-in keyer.
 - Uses Rig's CPU for perfect timing
-- Allows both CAT and CW keying over the same serial tty device without conflicts
+- Allows both CAT and CW keying over the same serial tty device without conflicts (only a single application accesses it)
 - Keyer speed stays synced between CLogger and Rig
 - Works with WFView so can be used on the local computer for fully remote operation.
 - New feature of Hamlib; may not work properly before version 4.1.
