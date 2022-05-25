@@ -65,7 +65,7 @@ mapkey() {
     "$escape") echo "escape";;
     "$tab") echo "tab";;
     " ") echo "space";;
-    *) 
+    *)
        if [[ "$1" =~ ^[[:alnum:]]*$ ]] || [[ "$1" =~ ^[[:punct:]]*$ ]]
        then
          echo "$1"
@@ -134,19 +134,37 @@ cwsend() {
     debug "passed cwsend tests"
     lastaction="$1"
     drawlastaction
-    if [[ "$2" == "sync" ]]
+    if [[ "$keywithhamlib" != "true" ]]
     then
-      debug "$keyer -w $speed -d $cwdevice -t \"$1\""
-      $keyer -w $speed -d $cwdevice -t "$1"
+      debug "keying with cwkeyer"
+      if [[ "$2" == "sync" ]]
+      then
+        debug "$keyer -w $speed -d $cwdevice -t \"$1\""
+        $keyer -w $speed -d $cwdevice -t "$1"
+      else
+        debug "$keyer -w $speed -d $cwdevice -t \"$1\" &"
+        $keyer -w $speed -d $cwdevice -t "$1" &
+      fi
     else
-      debug "$keyer -w $speed -d $cwdevice -t \"$1\" &"
-      $keyer -w $speed -d $cwdevice -t "$1" &
+      debug "keying with hamlib"
+      if [[ "$2" == "sync" ]]
+      then
+        rigcommand "b $1"
+        rigcommand \wait_morse
+      else
+        rigcommand "b $1"
+      fi
     fi
   fi
 }
 
 setwpm() {
   speed="$1"
+  if [[ "$keywithhamlib" == "true" ]]
+  then
+    debug "$rigctl $rigoptions -m $rig -r $rigdevice L KEYSPD $1"
+    rigcommand "L KEYSPD $1" 
+  fi
   clearbuff
   drawstatus
 }
@@ -154,12 +172,12 @@ setwpm() {
 qrq() {
   debug "${FUNCNAME[0]}"
   speed="$(($speed+5))"
-  drawstatus
+  setwpm $speed
 }
 qrs() {
   debug "${FUNCNAME[0]}"
   speed="$(($speed-5))"
-  drawstatus
+  setwpm $speed
 }
 runqrq=qrq
 sandpqrq=qrq
@@ -185,10 +203,11 @@ sendbuff() {
 }
 
 sendcq() {
-  debug "${FUNCNAME[0]}"
+ debug "${FUNCNAME[0]}"
  while true
  do
    cwsend "$mycq" "sync"
+   debug "Sleeping $cqdelay seconds between CQ calls"
    sleep $cqdelay
  done
 }
@@ -416,7 +435,7 @@ setband() {
   then
     # only lookup frequency and band information once per call
     if [ "$checked_band_for_current_call" == "false" ]
-    then 
+    then
       getfreq
       khz="$freq"
       getband "$freq"
@@ -427,7 +446,7 @@ setband() {
 # arg1 is call to check
 checkdupe() {
   debug "${FUNCNAME[0]}"
-  if fgrep -qiF "$1" "$logfile" 
+  if fgrep -qiF "$1" "$logfile"
   then
     if [ "$userig" == "true" ]
     then
@@ -476,15 +495,41 @@ runcommand() {
 
 rigcommand() {
   debug "${FUNCNAME[0]}"
+  rigctlcount=0
   if [[ "$userig"  == "true" ]]
   then
-    debug "$rigctl $rigoptions -m $rig -r $rigdevice $1"
     local arg1=$(echo "$1" | cut -d' ' -f1)
-    rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $1)
-    openkey
+    #CW string might have spaces, and quotes don't pass correctly
+    #so they are treated specially
+    if [[ "$arg1" == "b" ]]  #Sending CW
+    then
+      debug "Sending CW..."
+      local send1=$(echo "$1" | sed 's/^b\ //g' | sed "s/'//g")
+      debug "$rigctl $rigoptions -m $rig -r $rigdevice b '$send1'"
+      for rigctlcount in {1..5} #try rigctl several times in case radio is busy.
+      do
+        $($rigctl $rigoptions -m $rig -r $rigdevice b "$send1") && break
+	sleep 0.1
+      done 
+    else #Anything but sending CW
+      local send1=$(echo "$1" | sed "s/'//g")
+      debug "$rigctl $rigoptions -m $rig -r $rigdevice $send1"
+      for rigctlcount in {1..5} #try rigctl several times in case radio is busy
+      do
+        rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $send1) && break
+	sleep 0.1
+      done
+    fi
+    debug "Rig command returned: $rigres; required attempts: $rigctlcount"
+    if [[ "$keywithhamlib" != "true" ]]; then openkey; fi
     if [[ "$arg1" == "F" ]]
     then
       freq="$rigres"
+      drawstatus
+    fi
+    if [[ "$arg1" == "l" ]]
+    then
+      speed="$rigres"
       drawstatus
     fi
   fi
@@ -508,7 +553,15 @@ getfreq() {
   debug "${FUNCNAME[0]}"
   rigcommand "f"
   freq=$(tr -dc '[[:print:]]' <<< "$rigres")
-  freq=$(echo "$freq" | sed 's/[^0-9]*//g') 
+  freq=$(echo "$freq" | sed 's/[^0-9]*//g')
+}
+
+getkeyerspeed() {
+  if [[ "$keywithhamlib" == "true" ]]
+  then
+    rigcommand 'l KEYSPD'
+    debug "keyer is now $speed wpm"
+  fi
 }
 
 getband() {
@@ -552,7 +605,12 @@ escape() {
   if [[ "$usekeyer"  == "true" ]]
   then
     debug "$1 usekeyer=$usekeyer"
-    openkey
+    if [[ "$keywithhamlib" != "true" ]]
+    then
+      openkey
+    else
+      rigcommand \stop_morse
+    fi
   fi
 }
 runescape=escape
@@ -770,6 +828,7 @@ mainloop() {
   if [ "$userig" == "true" ]
   then
     getfreq
+    getkeyerspeed
   fi
   khz="$freq"
   getband "$freq"
@@ -785,6 +844,12 @@ mainloop() {
   if [ "$config_version" != "$clogger_version" ]
   then
     subbuff="WARNING - Mismatched configuration version"
+    drawsubmenu
+    drawbuff
+  fi
+  if [ "$userig" == "false" & "$keywithrig" == "true " ]
+  then
+    subbuff="WARNING - Mismatched userig and keywithrig configuration"
     drawsubmenu
     drawbuff
   fi

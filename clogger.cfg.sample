@@ -25,17 +25,20 @@ rigdevice="/dev/ttyUSB0"
 
 #CW Keyer
 usekeyer="true"
-#Change cwdevice if you have an external keyer. Otherwise, match radio 
+#Change kewwithhamlib to true to key using hamlib rather than cwkeyer.sh for
+#rigs that support it (e.g., the IC-7300).
+keywithhamlib="false"
+#Change cwdevice if you have an external keyer. Otherwise, match radio
 cwdevice="/dev/ttyUSB0"
 
 #
-# DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING 
+# DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING
 #
 #additional options for rigctl
 rigoptions="--set-conf=dtr_state=OFF --set-conf=rts_state=OFF"
 
 # modes we are working - cw will use the keyer, any other mode will not
-# the array is zero indexed 
+# the array is zero indexed
 modes=("CW" "SSB" "FT8")
 mode_index=0
 mode=${modes[0]}
@@ -50,7 +53,7 @@ rigctl="./rigctl"
 keyer="python keyer.py"
 
 if [ -z ${station_call} ]
-then 
+then
   station_call="$mycall"
 fi
 
