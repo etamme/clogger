@@ -25,8 +25,9 @@ cwkeyer works in a similar way to cwdaemon; by keying the transmitter via the RT
 - Can also use the built-in serial ports of many rigs
 
 Hamlib is used to read frequency in CLogger, but it can also key the transmitter. It does this by sending text over the CAT protocol to the radio's built-in keyer.
-- Uses Rig's CPU for perfect timing
+- One wire from the Rig to the computer for keying and CAT
 - Allows both CAT and CW keying over the same serial tty device without conflicts (only a single application accesses it)
+- Uses Rig's CPU for perfect timing
 - Keyer speed stays synced between CLogger and Rig
 - Works with WFView so can be used on the local computer for fully remote operation.
 - New feature of Hamlib; may not work properly before version 4.1.
