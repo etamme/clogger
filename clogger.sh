@@ -207,8 +207,8 @@ sendcq() {
  while true
  do
    cwsend "$mycq" "sync"
-   sleep $cqdelay
    debug "Sleeping $cqdelay seconds between CQ calls"
+   sleep $cqdelay
  done
 }
 
@@ -495,26 +495,33 @@ runcommand() {
 
 rigcommand() {
   debug "${FUNCNAME[0]}"
+  rigctlcount=0
   if [[ "$userig"  == "true" ]]
   then
     local arg1=$(echo "$1" | cut -d' ' -f1)
     #CW string might have spaces, and quotes don't pass correctly
     #so they are treated specially
-    if [[ "$arg1" == "b" ]] 
+    if [[ "$arg1" == "b" ]]  #Sending CW
     then
       debug "Sending CW..."
       local send1=$(echo "$1" | sed 's/^b\ //g' | sed "s/'//g")
       debug "$rigctl $rigoptions -m $rig -r $rigdevice b '$send1'"
-      rigres=$($rigctl $rigoptions -m $rig -r $rigdevice b "$send1")
-    else
+      for rigctlcount in {1..5} #try rigctl several times in case radio is busy.
+      do
+        $($rigctl $rigoptions -m $rig -r $rigdevice b "$send1") && break
+	sleep 0.1
+      done 
+    else #Anything but sending CW
       local send1=$(echo "$1" | sed "s/'//g")
       debug "$rigctl $rigoptions -m $rig -r $rigdevice $send1"
-      rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $send1)
+      for rigctlcount in {1..5} #try rigctl several times in case radio is busy
+      do
+        rigres=$($rigctl $rigoptions -m $rig -r $rigdevice $send1) && break
+	sleep 0.1
+      done
     fi
-    if [[ "$keywithhamlib" != "true" ]]
-    then
-      openkey
-    fi
+    debug "Rig command returned: $rigres; required attempts: $rigctlcount"
+    if [[ "$keywithhamlib" != "true" ]]; then openkey; fi
     if [[ "$arg1" == "F" ]]
     then
       freq="$rigres"
