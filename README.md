@@ -33,7 +33,7 @@ Hamlib is used to read frequency in CLogger, but it can also key the transmitter
 - New feature of Hamlib; may not work properly before version 4.1.
 - Limited radios supported*
 
-*Several radios support sending CW with hamlib, but CLogger also makes use of the "morse_wait" command to correctly time the CQ repeat, and "stop_morse" command to immediately stop the keyer when ESC is pressed. The IC-7300 was the first radio to be supported with all 3 functions in hamlib.
+*Several radios support sending CW with hamlib, but CLogger also makes use of the "morse_wait" command to correctly time the CQ repeat, and "stop_morse" command to immediately stop the keyer when ESC is pressed. The IC-7300 was the first radio to be supported with all 3 functions in hamlib. Note that if "morse_wait" is not implemented on your rig, you can set a longer cq interval and it should still be functional.
 
 ## WFView
 Example tested and working config connecting to WFView's pseudo TTY device with an IC-7300:
